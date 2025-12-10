@@ -1,0 +1,215 @@
+openapi: 3.1.0
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+- url: https://api.example.com
+  description: API Server
+paths:
+  /users/{id}:
+    get:
+      summary: GET /users/{id}
+      description: GET operation for /users/{id}
+      operationId: getUserById
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema: &id001
+                $ref: '#/components/schemas/GetUserByIdResponse'
+            application/xml:
+              schema: *id001
+          headers:
+            X-Request-ID:
+              description: Echo of the request ID
+              schema:
+                type: string
+                format: uuid
+            X-Correlation-ID:
+              description: Echo of the correlation ID
+              schema:
+                type: string
+                format: uuid
+            X-Response-Time:
+              description: Response processing time in milliseconds
+              schema:
+                type: integer
+                format: int64
+                example: 150
+            X-Rate-Limit-Remaining:
+              description: Number of requests remaining in the current rate limit
+                window
+              schema:
+                type: integer
+                format: int32
+                example: 99
+            X-Rate-Limit-Reset:
+              description: Time when the rate limit window resets
+              schema:
+                type: string
+                format: date-time
+                example: '2024-01-01T01:00:00Z'
+        '400':
+          description: Invalid request
+          headers: &id002
+            X-Request-ID:
+              description: Echo of the request ID
+              schema:
+                type: string
+                format: uuid
+            X-Correlation-ID:
+              description: Echo of the correlation ID
+              schema:
+                type: string
+                format: uuid
+            X-Response-Time:
+              description: Response processing time in milliseconds
+              schema:
+                type: integer
+                format: int64
+                example: 150
+            X-Rate-Limit-Remaining:
+              description: Number of requests remaining in the current rate limit
+                window
+              schema:
+                type: integer
+                format: int32
+                example: 99
+            X-Rate-Limit-Reset:
+              description: Time when the rate limit window resets
+              schema:
+                type: string
+                format: date-time
+                example: '2024-01-01T01:00:00Z'
+        '404':
+          description: Not found
+          headers: *id002
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: *id002
+      parameters:
+      - name: id
+        in: path
+        description: id parameter
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        description: Bearer token for authentication
+        required: false
+        schema:
+          type: string
+          example: Bearer <token>
+      - name: X-Request-ID
+        in: header
+        description: Unique identifier for the request
+        required: false
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: X-Correlation-ID
+        in: header
+        description: Correlation ID for tracking requests across services
+        required: false
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: X-Request-Date
+        in: header
+        description: Request timestamp
+        required: false
+        schema:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+      - name: X-Client-ID
+        in: header
+        description: Client identifier
+        required: false
+        schema:
+          type: string
+          example: client-123
+      - name: Content-Type
+        in: header
+        description: Content type of the request body
+        required: false
+        schema:
+          type: string
+          enum:
+          - application/json
+          - application/xml
+          - application/x-www-form-urlencoded
+          default: application/json
+      - name: Accept
+        in: header
+        description: Accepted response content types
+        required: false
+        schema:
+          type: string
+          enum:
+          - application/json
+          - application/xml
+          default: application/json
+components:
+  schemas:
+    GetUserByIdResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+          pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+        age:
+          type: integer
+          format: int32
+        active:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+            city:
+              type: string
+            zipcode:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})?$
+      required:
+      - id
+      - name
+      - email
+      - age
+      - active
+      - tags
+      - address
+      - created_at
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+      - code
+      - message
