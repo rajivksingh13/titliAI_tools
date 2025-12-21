@@ -1,0 +1,73 @@
+# Governance Configuration Example
+# This file demonstrates how to configure enterprise governance features
+
+# Security Schemes
+# Define security schemes that will be added to components/securitySchemes
+# and automatically applied to all operations
+security_schemes:
+  BearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: JWT Bearer token authentication
+  
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-Key
+    description: API Key authentication via header
+  
+  OAuth2:
+    type: oauth2
+    flows:
+      authorizationCode:
+        authorizationUrl: https://auth.company.com/oauth/authorize
+        tokenUrl: https://auth.company.com/oauth/token
+        scopes:
+          read: Read access
+          write: Write access
+          admin: Admin access
+
+# Mandatory Body Fields
+# Fields that will be automatically injected into all request/response bodies
+mandatory_body_fields:
+  - name: traceId
+    schema:
+      type: string
+      format: uuid
+      description: Unique trace identifier for request tracking
+    required: true
+    apply_to: both  # 'request', 'response', or 'both'
+  
+  - name: timestamp
+    schema:
+      type: string
+      format: date-time
+      description: Request/response timestamp
+    required: true
+    apply_to: both
+  
+  - name: userId
+    schema:
+      type: string
+      description: User identifier
+    required: false
+    apply_to: request  # Only in requests
+
+# OpenAPI Extensions
+# Custom x-* fields that will be added to the OpenAPI spec
+openapi_extensions:
+  x-company-metadata:
+    team: "Platform Team"
+    cost-center: "Engineering"
+    compliance: ["GDPR", "SOC2"]
+  
+  x-api-version: "2.1"
+  x-deprecated: false
+  x-support-email: "api-support@company.com"
+
+# Naming Convention
+# Enforce naming convention: 'camelCase' or 'snake_case'
+# If not specified, field names are kept as-is
+naming_convention: camelCase  # or 'snake_case'
+

@@ -1,0 +1,9 @@
+{
+  "id": 124,
+  "name": "Jane Smith Updated",
+  "email": "jane.updated@example.com",
+  "age": 29,
+  "active": true,
+  "updated_at": "2024-01-03T00:00:00Z"
+}
+
