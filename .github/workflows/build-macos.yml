@@ -46,7 +46,7 @@ jobs:
         file dist/openapi-gen-ui
     
     - name: Upload macOS executables
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-executables
         path: |
@@ -76,7 +76,7 @@ jobs:
         echo "Created: ${PACKAGE_NAME}.zip"
     
     - name: Upload macOS distribution package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-distribution-package
         path: openapi-generator-tool-macos-v*.zip
