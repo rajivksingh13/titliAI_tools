@@ -1,0 +1,84 @@
+name: Build macOS Executables
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags
+  release:
+    types: [created]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install pyinstaller
+        if [ -f requirements.txt ]; then
+          python3 -m pip install -r requirements.txt
+        fi
+    
+    - name: Build CLI executable
+      run: |
+        chmod +x create_executable.sh
+        ./create_executable.sh
+    
+    - name: Build UI executable
+      run: |
+        chmod +x create_executable_ui.sh
+        ./create_executable_ui.sh
+    
+    - name: Verify executables
+      run: |
+        ls -lh dist/
+        file dist/openapi-gen-cli
+        file dist/openapi-gen-ui
+    
+    - name: Upload macOS executables
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-executables
+        path: |
+          dist/openapi-gen-cli
+          dist/openapi-gen-ui
+        retention-days: 30
+    
+    - name: Create distribution package
+      run: |
+        VERSION="1.0.0"
+        PACKAGE_NAME="openapi-generator-tool-macos-v${VERSION}"
+        mkdir -p "${PACKAGE_NAME}"
+        
+        # Copy executables
+        cp dist/openapi-gen-cli "${PACKAGE_NAME}/"
+        cp dist/openapi-gen-ui "${PACKAGE_NAME}/"
+        
+        # Copy scripts and documentation
+        cp start_ui.sh "${PACKAGE_NAME}/" 2>/dev/null || true
+        cp README.md "${PACKAGE_NAME}/" 2>/dev/null || true
+        cp RUNBOOK_GUIDE.md "${PACKAGE_NAME}/" 2>/dev/null || true
+        cp RUNBOOK_GUIDE_CLI.md "${PACKAGE_NAME}/" 2>/dev/null || true
+        
+        # Create ZIP
+        zip -r "${PACKAGE_NAME}.zip" "${PACKAGE_NAME}"
+        
+        echo "Created: ${PACKAGE_NAME}.zip"
+    
+    - name: Upload macOS distribution package
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-distribution-package
+        path: openapi-generator-tool-macos-v*.zip
+        retention-days: 30
+

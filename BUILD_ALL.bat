@@ -161,6 +161,25 @@ if errorlevel 1 (
 )
 echo   ✓ openapi-gen-ui.exe
 
+REM Optionally copy macOS/Linux executables if they exist (built separately)
+if exist dist\openapi-gen-cli (
+    copy dist\openapi-gen-cli "%TEMP_DIR%\%PACKAGE_NAME%\" >nul
+    if errorlevel 1 (
+        echo WARNING: Failed to copy openapi-gen-cli (macOS/Linux)
+    ) else (
+        echo   ✓ openapi-gen-cli (macOS/Linux)
+    )
+)
+
+if exist dist\openapi-gen-ui (
+    copy dist\openapi-gen-ui "%TEMP_DIR%\%PACKAGE_NAME%\" >nul
+    if errorlevel 1 (
+        echo WARNING: Failed to copy openapi-gen-ui (macOS/Linux)
+    ) else (
+        echo   ✓ openapi-gen-ui (macOS/Linux)
+    )
+)
+
 REM Copy README.txt (user-facing documentation)
 if exist dist_package\README.txt (
     copy dist_package\README.txt "%TEMP_DIR%\%PACKAGE_NAME%\" >nul
@@ -264,8 +283,14 @@ echo   - dist\openapi-gen-ui.exe (Flask UI executable)
 echo   - %PACKAGE_NAME%.zip (Distribution package)
 echo.
 echo Package includes:
-echo   - openapi-gen-cli.exe (CLI executable)
-echo   - openapi-gen-ui.exe (UI executable)
+echo   - openapi-gen-cli.exe (CLI executable - Windows)
+echo   - openapi-gen-ui.exe (UI executable - Windows)
+if exist dist\openapi-gen-cli (
+    echo   - openapi-gen-cli (CLI executable - macOS/Linux)
+)
+if exist dist\openapi-gen-ui (
+    echo   - openapi-gen-ui (UI executable - macOS/Linux)
+)
 echo   - README.txt (User documentation)
 echo   - START_UI.bat (Windows launcher)
 echo   - start_ui.sh (Linux/macOS launcher)
@@ -273,6 +298,11 @@ echo   - RUNBOOK_GUIDE.md (Web UI run-book)
 echo   - RUNBOOK_GUIDE_CLI.md (CLI run-book)
 echo.
 echo Distribution package location: %CD%\%PACKAGE_NAME%.zip
+echo.
+echo NOTE: To include macOS/Linux executables:
+echo   1. Build them on macOS using GitHub Actions (see BUILD_MULTI_PLATFORM.md)
+echo   2. Copy the macOS executables to dist\ folder
+echo   3. Run this script again to create a multi-platform package
 echo.
 pause
 
