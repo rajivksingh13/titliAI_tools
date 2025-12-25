@@ -44,9 +44,13 @@ jobs:
         ls -lh dist/
         file dist/openapi-gen-cli
         file dist/openapi-gen-ui
+        # Set execute permissions
+        chmod +x dist/openapi-gen-cli
+        chmod +x dist/openapi-gen-ui
+        echo "✓ Execute permissions set"
     
     - name: Upload macOS executables
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-executables
         path: |
@@ -64,8 +68,15 @@ jobs:
         cp dist/openapi-gen-cli "${PACKAGE_NAME}/"
         cp dist/openapi-gen-ui "${PACKAGE_NAME}/"
         
+        # Set execute permissions on executables and scripts
+        chmod +x "${PACKAGE_NAME}/openapi-gen-cli"
+        chmod +x "${PACKAGE_NAME}/openapi-gen-ui"
+        
         # Copy scripts and documentation
         cp start_ui.sh "${PACKAGE_NAME}/" 2>/dev/null || true
+        if [ -f "${PACKAGE_NAME}/start_ui.sh" ]; then
+          chmod +x "${PACKAGE_NAME}/start_ui.sh"
+        fi
         cp README.md "${PACKAGE_NAME}/" 2>/dev/null || true
         cp RUNBOOK_GUIDE.md "${PACKAGE_NAME}/" 2>/dev/null || true
         cp RUNBOOK_GUIDE_CLI.md "${PACKAGE_NAME}/" 2>/dev/null || true
@@ -76,7 +87,7 @@ jobs:
         echo "Created: ${PACKAGE_NAME}.zip"
     
     - name: Upload macOS distribution package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-distribution-package
         path: openapi-generator-tool-macos-v*.zip
