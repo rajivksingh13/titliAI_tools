@@ -79,8 +79,29 @@ if __name__ == '__main__':
     print("=" * 50)
     print("OpenAPI Generator - Web UI")
     print("=" * 50)
+    
+    # Debug info
+    if getattr(sys, 'frozen', False):
+        print(f"Running as frozen executable")
+        print(f"MEIPASS: {sys._MEIPASS}")
+        if os.path.exists(sys._MEIPASS):
+            print(f"MEIPASS exists: True")
+            print(f"Files in MEIPASS: {os.listdir(sys._MEIPASS)[:10]}")
+            template_path = os.path.join(sys._MEIPASS, 'openapi_generator', 'templates')
+            print(f"Template path: {template_path}")
+            print(f"Template path exists: {os.path.exists(template_path)}")
+            if os.path.exists(template_path):
+                print(f"Template files: {os.listdir(template_path)}")
+    else:
+        print(f"Running as script")
+        print(f"Template folder: {app.template_folder}")
+        print(f"Template folder exists: {os.path.exists(app.template_folder) if app.template_folder else False}")
+    
     print("\nStarting web server...")
     print("Server will be available at: http://localhost:5000")
+    print("Test routes:")
+    print("  - http://localhost:5000/ping (simple test)")
+    print("  - http://localhost:5000/test (debug info)")
     print("Press Ctrl+C to stop the server")
     print("=" * 50)
     import webbrowser

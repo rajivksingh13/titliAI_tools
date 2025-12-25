@@ -89,9 +89,45 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 app.jinja_env.cache = None
 
+# Debug route to test if Flask is working
+@app.route('/test')
+def test():
+    """Test route to verify Flask is working."""
+    debug_info = {
+        'flask_working': True,
+        'template_folder': app.template_folder,
+        'static_folder': app.static_folder,
+        'template_exists': os.path.exists(os.path.join(app.template_folder, 'index.html')) if app.template_folder else False,
+        'frozen': getattr(sys, 'frozen', False),
+    }
+    if getattr(sys, 'frozen', False):
+        debug_info['meipass'] = sys._MEIPASS
+        if os.path.exists(sys._MEIPASS):
+            debug_info['meipass_files'] = os.listdir(sys._MEIPASS)[:20]
+            # Check for templates
+            template_path = os.path.join(sys._MEIPASS, 'openapi_generator', 'templates')
+            debug_info['template_path_exists'] = os.path.exists(template_path)
+            if os.path.exists(template_path):
+                debug_info['template_files'] = os.listdir(template_path)
+    return jsonify(debug_info)
+
+# Simple text route to test routing
+@app.route('/ping')
+def ping():
+    """Simple test route that returns plain text."""
+    return "PONG - Flask is working!", 200
+
 @app.route('/')
 def index():
     """Main page."""
+    # Debug: Print template folder info
+    print(f"DEBUG: Template folder: {app.template_folder}", file=sys.stderr)
+    print(f"DEBUG: Template folder exists: {os.path.exists(app.template_folder) if app.template_folder else False}", file=sys.stderr)
+    if app.template_folder and os.path.exists(app.template_folder):
+        print(f"DEBUG: Files in template folder: {os.listdir(app.template_folder)}", file=sys.stderr)
+        template_file = os.path.join(app.template_folder, 'index.html')
+        print(f"DEBUG: index.html exists: {os.path.exists(template_file)}", file=sys.stderr)
+    
     try:
         return render_template('index.html')
     except Exception as e:
@@ -104,6 +140,12 @@ def index():
             error_msg += f"MEIPASS: {sys._MEIPASS}\n"
             if os.path.exists(sys._MEIPASS):
                 error_msg += f"Files in MEIPASS: {os.listdir(sys._MEIPASS)[:20]}\n"
+                # Check template path
+                template_path = os.path.join(sys._MEIPASS, 'openapi_generator', 'templates')
+                error_msg += f"Template path: {template_path}\n"
+                error_msg += f"Template path exists: {os.path.exists(template_path)}\n"
+                if os.path.exists(template_path):
+                    error_msg += f"Template files: {os.listdir(template_path)}\n"
         error_msg += f"Traceback: {traceback.format_exc()}"
         print(error_msg, file=sys.stderr)
         return f"<h1>Error loading template</h1><pre>{error_msg}</pre>", 500
