@@ -15,6 +15,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for tags
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -29,13 +31,28 @@ jobs:
           python3 -m pip install -r requirements.txt
         fi
     
+    - name: Verify build scripts exist
+      run: |
+        echo "Checking for build scripts..."
+        ls -la create_executable*.sh || echo "Build scripts not found in current directory"
+        pwd
+        ls -la
+    
     - name: Build CLI executable
       run: |
+        if [ ! -f "create_executable.sh" ]; then
+          echo "ERROR: create_executable.sh not found!"
+          exit 1
+        fi
         chmod +x create_executable.sh
         ./create_executable.sh
     
     - name: Build UI executable
       run: |
+        if [ ! -f "create_executable_ui.sh" ]; then
+          echo "ERROR: create_executable_ui.sh not found!"
+          exit 1
+        fi
         chmod +x create_executable_ui.sh
         ./create_executable_ui.sh
     
