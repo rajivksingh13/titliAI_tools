@@ -1,7 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('openapi_generator', 'openapi_generator'), ('openapi_generator/templates', 'openapi_generator/templates')]
+# Include the entire openapi_generator package with all subdirectories
+datas = [
+    ('openapi_generator', 'openapi_generator'),
+]
 binaries = []
 hiddenimports = ['openapi_generator', 'openapi_generator.generator', 'openapi_generator.web_ui', 'openapi_generator.multi_operation', 'flask', 'jinja2', 'werkzeug', 'yaml']
 tmp_ret = collect_all('flask')

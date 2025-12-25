@@ -92,7 +92,21 @@ app.jinja_env.cache = None
 @app.route('/')
 def index():
     """Main page."""
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        # Debug: Log the error to help diagnose template path issues
+        import traceback
+        error_msg = f"Error rendering template: {str(e)}\n"
+        error_msg += f"Template folder: {app.template_folder}\n"
+        error_msg += f"Static folder: {app.static_folder}\n"
+        if getattr(sys, 'frozen', False):
+            error_msg += f"MEIPASS: {sys._MEIPASS}\n"
+            if os.path.exists(sys._MEIPASS):
+                error_msg += f"Files in MEIPASS: {os.listdir(sys._MEIPASS)[:20]}\n"
+        error_msg += f"Traceback: {traceback.format_exc()}"
+        print(error_msg, file=sys.stderr)
+        return f"<h1>Error loading template</h1><pre>{error_msg}</pre>", 500
 
 @app.route('/favicon.ico')
 def favicon():
