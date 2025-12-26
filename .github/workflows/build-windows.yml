@@ -1,0 +1,186 @@
+name: Build Windows Executables
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags
+  release:
+    types: [created]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for tags
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pyinstaller
+        if (Test-Path requirements.txt) {
+          python -m pip install -r requirements.txt
+        }
+    
+    - name: Verify build files exist
+      run: |
+        Write-Host "Checking for build files..."
+        if (-not (Test-Path "openapi-gen.spec")) {
+          Write-Host "ERROR: openapi-gen.spec not found!"
+          exit 1
+        }
+        if (-not (Test-Path "openapi-ui.spec")) {
+          Write-Host "ERROR: openapi-ui.spec not found!"
+          exit 1
+        }
+        Write-Host "✓ All spec files found"
+    
+    - name: Clean previous builds
+      run: |
+        if (Test-Path "build") {
+          Remove-Item -Recurse -Force "build"
+        }
+        if (Test-Path "dist\openapi-gen-cli.exe") {
+          Remove-Item -Force "dist\openapi-gen-cli.exe"
+        }
+        if (Test-Path "dist\openapi-gen-ui.exe") {
+          Remove-Item -Force "dist\openapi-gen-ui.exe"
+        }
+        Write-Host "✓ Cleanup complete"
+    
+    - name: Build CLI executable
+      run: |
+        Write-Host "Building CLI executable..."
+        python -m PyInstaller openapi-gen.spec --clean --noconfirm
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "ERROR: Failed to build CLI executable!"
+          exit 1
+        }
+        if (-not (Test-Path "dist\openapi-gen-cli.exe")) {
+          Write-Host "ERROR: CLI executable was not created!"
+          exit 1
+        }
+        Write-Host "✓ CLI executable created: dist\openapi-gen-cli.exe"
+    
+    - name: Build UI executable
+      run: |
+        Write-Host "Building UI executable..."
+        python -m PyInstaller openapi-ui.spec --clean --noconfirm
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "ERROR: Failed to build UI executable!"
+          exit 1
+        }
+        if (-not (Test-Path "dist\openapi-gen-ui.exe")) {
+          Write-Host "ERROR: UI executable was not created!"
+          exit 1
+        }
+        Write-Host "✓ UI executable created: dist\openapi-gen-ui.exe"
+    
+    - name: Verify executables
+      run: |
+        Write-Host "Verifying executables..."
+        Get-ChildItem -Path "dist" -Filter "*.exe" | ForEach-Object {
+          Write-Host "  Found: $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+        }
+        Write-Host "✓ Executables verified"
+    
+    - name: Upload Windows executables
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-executables
+        path: |
+          dist/openapi-gen-cli.exe
+          dist/openapi-gen-ui.exe
+        retention-days: 30
+    
+    - name: Create distribution package
+      run: |
+        $VERSION = "1.0.0"
+        $PACKAGE_NAME = "openapi-generator-tool-windows-v$VERSION"
+        
+        Write-Host "Creating distribution package: $PACKAGE_NAME"
+        
+        # Create package directory
+        New-Item -ItemType Directory -Force -Path $PACKAGE_NAME | Out-Null
+        
+        # Copy executables
+        Copy-Item "dist\openapi-gen-cli.exe" "$PACKAGE_NAME\" -ErrorAction Stop
+        Copy-Item "dist\openapi-gen-ui.exe" "$PACKAGE_NAME\" -ErrorAction Stop
+        Write-Host "  ✓ Copied executables"
+        
+        # Copy scripts and documentation
+        $filesToCopy = @(
+          @{src="START_UI.bat"; required=$false},
+          @{src="start_ui.sh"; required=$false},
+          @{src="README.md"; required=$false},
+          @{src="RUNBOOK_GUIDE.md"; required=$false},
+          @{src="RUNBOOK_GUIDE_CLI.md"; required=$false},
+          @{src="INSTALLATION_INSTRUCTIONS.md"; required=$false}
+        )
+        
+        foreach ($file in $filesToCopy) {
+          if (Test-Path $file.src) {
+            Copy-Item $file.src "$PACKAGE_NAME\" -ErrorAction SilentlyContinue
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "  ✓ Copied $($file.src)"
+            }
+          } elseif ($file.required) {
+            Write-Host "  WARNING: $($file.src) not found (optional)"
+          }
+        }
+        
+        # Copy README.txt if it exists (user-facing documentation)
+        if (Test-Path "dist_package\README.txt") {
+          Copy-Item "dist_package\README.txt" "$PACKAGE_NAME\" -ErrorAction SilentlyContinue
+          Write-Host "  ✓ Copied README.txt"
+        } elseif (Test-Path "README.txt") {
+          Copy-Item "README.txt" "$PACKAGE_NAME\" -ErrorAction SilentlyContinue
+          Write-Host "  ✓ Copied README.txt"
+        }
+        
+        # Create ZIP archive
+        Write-Host "Creating ZIP archive..."
+        Compress-Archive -Path "$PACKAGE_NAME\*" -DestinationPath "$PACKAGE_NAME.zip" -Force
+        
+        if (-not (Test-Path "$PACKAGE_NAME.zip")) {
+          Write-Host "ERROR: ZIP file was not created!"
+          exit 1
+        }
+        
+        $zipSize = (Get-Item "$PACKAGE_NAME.zip").Length / 1MB
+        Write-Host "✓ Created: $PACKAGE_NAME.zip ($([math]::Round($zipSize, 2)) MB)"
+    
+    - name: Upload Windows distribution package
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-distribution-package
+        path: openapi-generator-tool-windows-v*.zip
+        retention-days: 30
+    
+    - name: Display package contents
+      run: |
+        $zipFile = Get-ChildItem -Path "." -Filter "openapi-generator-tool-windows-v*.zip" | Select-Object -First 1
+        if ($zipFile) {
+          Write-Host "========================================"
+          Write-Host "Distribution Package Created"
+          Write-Host "========================================"
+          Write-Host "File: $($zipFile.Name)"
+          Write-Host "Size: $([math]::Round($zipFile.Length / 1MB, 2)) MB"
+          Write-Host ""
+          Write-Host "Package includes:"
+          Write-Host "  - openapi-gen-cli.exe (CLI executable)"
+          Write-Host "  - openapi-gen-ui.exe (UI executable)"
+          Write-Host "  - START_UI.bat (Windows launcher)"
+          Write-Host "  - Documentation files"
+          Write-Host "========================================"
+        }
+
