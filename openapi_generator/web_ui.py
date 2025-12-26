@@ -8,6 +8,7 @@ import yaml
 import tempfile
 import os
 import sys
+import socket
 from pathlib import Path
 
 # Ensure site-packages are available for imports
@@ -1714,15 +1715,44 @@ def download_file(filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def find_available_port(start_port=5000, max_attempts=10):
+    """Find an available port starting from start_port.
+    
+    On macOS, port 5000 is often used by AirPlay Receiver, so we need
+    to find an alternative port if 5000 is not available.
+    
+    Args:
+        start_port: The port to start checking from
+        max_attempts: Maximum number of ports to try
+        
+    Returns:
+        An available port number
+    """
+    for port in range(start_port, start_port + max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('127.0.0.1', port))
+                return port
+        except OSError:
+            # Port is in use, try next one
+            continue
+    # If no port found, raise an error
+    raise RuntimeError(f"Could not find an available port in range {start_port}-{start_port + max_attempts - 1}")
+
 if __name__ == '__main__':
+    # Find an available port (macOS often has port 5000 occupied by AirPlay)
+    port = find_available_port(start_port=5000, max_attempts=10)
+    
     print("=" * 50)
     print("OpenAPI Generator - Web UI")
     print("=" * 50)
     print("\nStarting web server...")
-    print("Server will be available at: http://localhost:5000")
+    print(f"Server will be available at: http://localhost:{port}")
+    if port != 5000:
+        print(f"Note: Port 5000 was in use, using port {port} instead")
     print("Press Ctrl+C to stop the server")
     print("=" * 50)
     # Enable debug mode for development to auto-reload templates
     # Set debug=False for production
-    app.run(host='127.0.0.1', port=5000, debug=True, use_reloader=True)
+    app.run(host='127.0.0.1', port=port, debug=True, use_reloader=True)
 

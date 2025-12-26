@@ -75,7 +75,35 @@ except ImportError:
         else:
             raise ImportError("Failed to load web_ui module")
 
+def find_available_port(start_port=5000, max_attempts=10):
+    """Find an available port starting from start_port.
+    
+    On macOS, port 5000 is often used by AirPlay Receiver, so we need
+    to find an alternative port if 5000 is not available.
+    
+    Args:
+        start_port: The port to start checking from
+        max_attempts: Maximum number of ports to try
+        
+    Returns:
+        An available port number
+    """
+    import socket
+    for port in range(start_port, start_port + max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('127.0.0.1', port))
+                return port
+        except OSError:
+            # Port is in use, try next one
+            continue
+    # If no port found, raise an error
+    raise RuntimeError(f"Could not find an available port in range {start_port}-{start_port + max_attempts - 1}")
+
 if __name__ == '__main__':
+    # Find an available port (macOS often has port 5000 occupied by AirPlay)
+    port = find_available_port(start_port=5000, max_attempts=10)
+    
     print("=" * 50)
     print("OpenAPI Generator - Web UI")
     print("=" * 50)
@@ -98,10 +126,12 @@ if __name__ == '__main__':
         print(f"Template folder exists: {os.path.exists(app.template_folder) if app.template_folder else False}")
     
     print("\nStarting web server...")
-    print("Server will be available at: http://localhost:5000")
+    print(f"Server will be available at: http://localhost:{port}")
+    if port != 5000:
+        print(f"Note: Port 5000 was in use, using port {port} instead")
     print("Test routes:")
-    print("  - http://localhost:5000/ping (simple test)")
-    print("  - http://localhost:5000/test (debug info)")
+    print(f"  - http://localhost:{port}/ping (simple test)")
+    print(f"  - http://localhost:{port}/test (debug info)")
     print("Press Ctrl+C to stop the server")
     print("=" * 50)
     import webbrowser
@@ -110,8 +140,8 @@ if __name__ == '__main__':
     def open_browser():
         import time
         time.sleep(1.5)
-        webbrowser.open('http://localhost:5000')
+        webbrowser.open(f'http://localhost:{port}')
     
     threading.Thread(target=open_browser, daemon=True).start()
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    app.run(host='127.0.0.1', port=port, debug=False)
 
