@@ -1,0 +1,193 @@
+name: Build macOS Executables
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags
+  release:
+    types: [created]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for tags
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install pyinstaller
+        if [ -f requirements.txt ]; then
+          python3 -m pip install -r requirements.txt
+        fi
+    
+    - name: Verify build files exist
+      run: |
+        echo "Checking for build files..."
+        if [ ! -f "openapi-gen.spec" ]; then
+          echo "ERROR: openapi-gen.spec not found!"
+          exit 1
+        fi
+        if [ ! -f "openapi-ui.spec" ]; then
+          echo "ERROR: openapi-ui.spec not found!"
+          exit 1
+        fi
+        echo "✓ All spec files found"
+    
+    - name: Clean previous builds
+      run: |
+        if [ -d "build" ]; then
+          rm -rf build
+        fi
+        if [ -f "dist/openapi-gen-cli" ]; then
+          rm -f dist/openapi-gen-cli
+        fi
+        if [ -f "dist/openapi-gen-ui" ]; then
+          rm -f dist/openapi-gen-ui
+        fi
+        echo "✓ Cleanup complete"
+    
+    - name: Build CLI executable
+      run: |
+        echo "Building CLI executable..."
+        python3 -m PyInstaller openapi-gen.spec --clean --noconfirm
+        if [ $? -ne 0 ]; then
+          echo "ERROR: Failed to build CLI executable!"
+          exit 1
+        fi
+        if [ ! -f "dist/openapi-gen-cli" ]; then
+          echo "ERROR: CLI executable was not created!"
+          exit 1
+        fi
+        echo "✓ CLI executable created: dist/openapi-gen-cli"
+    
+    - name: Build UI executable
+      run: |
+        echo "Building UI executable..."
+        python3 -m PyInstaller openapi-ui.spec --clean --noconfirm
+        if [ $? -ne 0 ]; then
+          echo "ERROR: Failed to build UI executable!"
+          exit 1
+        fi
+        if [ ! -f "dist/openapi-gen-ui" ]; then
+          echo "ERROR: UI executable was not created!"
+          exit 1
+        fi
+        echo "✓ UI executable created: dist/openapi-gen-ui"
+    
+    - name: Verify executables
+      run: |
+        echo "Verifying executables..."
+        chmod +x dist/openapi-gen-cli
+        chmod +x dist/openapi-gen-ui
+        ls -lh dist/openapi-gen-cli dist/openapi-gen-ui
+        echo "✓ Executables verified and permissions set"
+    
+    - name: Upload macOS executables
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-executables
+        path: |
+          dist/openapi-gen-cli
+          dist/openapi-gen-ui
+        retention-days: 30
+    
+    - name: Create distribution package
+      run: |
+        VERSION="1.0.0"
+        PACKAGE_NAME="openapi-generator-tool-macos-v${VERSION}"
+        
+        echo "Creating distribution package: ${PACKAGE_NAME}"
+        
+        # Create package directory
+        mkdir -p "${PACKAGE_NAME}"
+        
+        # Copy executables
+        cp dist/openapi-gen-cli "${PACKAGE_NAME}/"
+        cp dist/openapi-gen-ui "${PACKAGE_NAME}/"
+        chmod +x "${PACKAGE_NAME}/openapi-gen-cli"
+        chmod +x "${PACKAGE_NAME}/openapi-gen-ui"
+        echo "  ✓ Copied executables"
+        
+        # Copy scripts and documentation
+        files_to_copy=(
+          "START_UI.bat"
+          "start_ui.sh"
+          "README.md"
+          "RUNBOOK_GUIDE.md"
+          "RUNBOOK_GUIDE_CLI.md"
+          "INSTALLATION_INSTRUCTIONS.md"
+          "MACOS_INSTALLATION.md"
+          "MACOS_QUICK_START.md"
+        )
+        
+        for file in "${files_to_copy[@]}"; do
+          if [ -f "$file" ]; then
+            cp "$file" "${PACKAGE_NAME}/"
+            # Make shell scripts executable
+            if [[ "$file" == *.sh ]]; then
+              chmod +x "${PACKAGE_NAME}/$file"
+            fi
+            echo "  ✓ Copied $file"
+          else
+            echo "  WARNING: $file not found (optional)"
+          fi
+        done
+        
+        # Copy README.txt if it exists (user-facing documentation)
+        if [ -f "dist_package/README.txt" ]; then
+          cp "dist_package/README.txt" "${PACKAGE_NAME}/"
+          echo "  ✓ Copied README.txt"
+        elif [ -f "README.txt" ]; then
+          cp "README.txt" "${PACKAGE_NAME}/"
+          echo "  ✓ Copied README.txt"
+        fi
+        
+        # Create ZIP archive
+        echo "Creating ZIP archive..."
+        zip -r "${PACKAGE_NAME}.zip" "${PACKAGE_NAME}"
+        
+        if [ ! -f "${PACKAGE_NAME}.zip" ]; then
+          echo "ERROR: ZIP file was not created!"
+          exit 1
+        fi
+        
+        zip_size=$(du -h "${PACKAGE_NAME}.zip" | cut -f1)
+        echo "✓ Created: ${PACKAGE_NAME}.zip (${zip_size})"
+    
+    - name: Upload macOS distribution package
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-distribution-package
+        path: openapi-generator-tool-macos-v*.zip
+        retention-days: 30
+    
+    - name: Display package contents
+      run: |
+        zip_file=$(ls openapi-generator-tool-macos-v*.zip | head -n 1)
+        if [ -n "$zip_file" ]; then
+          echo "========================================"
+          echo "Distribution Package Created"
+          echo "========================================"
+          echo "File: $zip_file"
+          file_size=$(du -h "$zip_file" | cut -f1)
+          echo "Size: $file_size"
+          echo ""
+          echo "Package includes:"
+          echo "  - openapi-gen-cli (CLI executable)"
+          echo "  - openapi-gen-ui (UI executable)"
+          echo "  - start_ui.sh (macOS/Linux launcher)"
+          echo "  - Documentation files"
+          echo "========================================"
+        fi
+

@@ -9,9 +9,39 @@ Since PyInstaller creates platform-specific executables, you need to build on ea
 
 ## Solution: Use GitHub Actions (Recommended)
 
-The easiest way to build macOS executables without a Mac is to use **GitHub Actions**, which provides free macOS runners.
+The easiest way to build executables without the target platform is to use **GitHub Actions**, which provides free Windows, macOS, and Linux runners.
+
+### Available Workflows
+
+1. **Windows builds**: `.github/workflows/build-windows.yml`
+   - Builds Windows `.exe` executables
+   - Creates distribution ZIP package
+   - See `WINDOWS_BUILD_GUIDE.md` for details
+
+2. **macOS builds**: `.github/workflows/build-macos.yml`
+   - Builds macOS executables
+   - Creates distribution ZIP package
 
 ### Setup Instructions
+
+#### Building Windows Executables
+
+1. **Push your code to GitHub** (if not already done)
+
+2. **The workflow is already created** at `.github/workflows/build-windows.yml`
+
+3. **Trigger the build**:
+   - Go to your GitHub repository
+   - Click on "Actions" tab
+   - Select "Build Windows Executables" workflow
+   - Click "Run workflow" button
+   - Wait for the build to complete (usually 5-10 minutes)
+
+4. **Download the executables**:
+   - After the workflow completes, go to the "Artifacts" section
+   - Download `windows-executables` (individual executables) or `windows-distribution-package` (complete package)
+
+#### Building macOS Executables
 
 1. **Push your code to GitHub** (if not already done)
 
@@ -28,10 +58,14 @@ The easiest way to build macOS executables without a Mac is to use **GitHub Acti
    - After the workflow completes, go to the "Artifacts" section
    - Download `macos-executables` (individual executables) or `macos-distribution-package` (complete package)
 
-5. **Combine with Windows build**:
-   - Build Windows executables using `BUILD_ALL.bat` on your Windows machine
-   - Copy the macOS executables from GitHub Actions to your `dist` folder
-   - Run `BUILD_ALL.bat` again - it will include both Windows and macOS executables in the final package
+#### Combining Multiple Platforms
+
+1. Build Windows executables via GitHub Actions
+2. Build macOS executables via GitHub Actions
+3. Download both and combine them manually, or:
+   - Download macOS executables from GitHub Actions
+   - Copy them to your `dist/` folder
+   - Build Windows executables locally using `BUILD_ALL.bat` - it will detect and include both
 
 ### Alternative: Manual macOS Build Options
 
@@ -49,7 +83,12 @@ If you prefer not to use GitHub Actions, you can:
 
 ## Building Process
 
-### On Windows (Your Machine):
+### On Windows (GitHub Actions or Local):
+**Via GitHub Actions** (recommended):
+- Use `.github/workflows/build-windows.yml` workflow
+- See `WINDOWS_BUILD_GUIDE.md` for details
+
+**Local build** (if you have Windows):
 ```cmd
 BUILD_ALL.bat
 ```
@@ -58,6 +97,10 @@ This creates:
 - `dist/openapi-gen-ui.exe`
 
 ### On macOS (GitHub Actions or Mac):
+**Via GitHub Actions** (recommended):
+- Use `.github/workflows/build-macos.yml` workflow
+
+**Local build** (if you have macOS):
 ```bash
 ./create_executable.sh
 ./create_executable_ui.sh

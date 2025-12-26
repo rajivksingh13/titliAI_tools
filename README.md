@@ -58,9 +58,12 @@ chmod +x install.sh
 ./install.sh
 ```
 
+**macOS users:** See [`MACOS_INSTALLATION.md`](MACOS_INSTALLATION.md) for detailed instructions or [`MACOS_QUICK_START.md`](MACOS_QUICK_START.md) for a quick start.
+
 **Or install manually using pip:**
 
 ```bash
+pip install -r requirements.txt
 pip install .
 ```
 
