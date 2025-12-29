@@ -119,9 +119,9 @@ class OpenAPIValidator:
             self.errors.append(f"Path '{path}': path item must be an object")
             return
         
-        # Path should start with /
+        # Path should start with / (OpenAPI requirement)
         if not path.startswith('/'):
-            self.warnings.append(f"Path '{path}': should start with '/'")
+            self.errors.append(f"Path '{path}': must start with '/' (OpenAPI specification requirement)")
         
         # Validate operations
         valid_methods = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace']

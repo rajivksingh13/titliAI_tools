@@ -150,6 +150,9 @@ class MultiOperationGenerator:
         for op_config in operations_config:
             method = op_config.get('method', '').upper()
             path = op_config.get('path')
+            # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+            if path and not path.startswith('/'):
+                path = '/' + path
             operation_id = op_config.get('operation_id')
             response_json = op_config.get('response_json')
             request_json = op_config.get('request_json')
@@ -206,5 +209,12 @@ class MultiOperationGenerator:
             
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write(yaml_output)
+                f.flush()  # Ensure data is written to OS buffer
+                # Force file system sync to ensure data is on disk
+                try:
+                    import os
+                    os.fsync(f.fileno())  # Force write to disk
+                except:
+                    pass  # If fsync fails, continue anyway (not supported on all systems)
         
         return yaml_output

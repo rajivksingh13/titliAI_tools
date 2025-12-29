@@ -385,10 +385,13 @@ class ProtobufConverter:
             if 'paths' not in openapi_spec:
                 openapi_spec['paths'] = {}
             
-            if path not in openapi_spec['paths']:
-                openapi_spec['paths'][path] = {}
+            # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+            normalized_path = path if path.startswith('/') else '/' + path
             
-            openapi_spec['paths'][path][method.lower()] = operation
+            if normalized_path not in openapi_spec['paths']:
+                openapi_spec['paths'][normalized_path] = {}
+            
+            openapi_spec['paths'][normalized_path][method.lower()] = operation
         
         return openapi_spec
 

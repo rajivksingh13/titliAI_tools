@@ -185,12 +185,12 @@ class PDFWordExporter:
                 description = operation.get('description', '')
                 tags = operation.get('tags', [])
                 
-                # Method and summary
-                method_text = f"<b>{method_upper}</b>"
-                if summary:
-                    method_text += f" - {summary}"
+                # Use operation ID only (e.g., "getUserId", "createUser")
                 if operation_id:
-                    method_text += f" <i>({operation_id})</i>"
+                    method_text = f"<b>{operation_id}</b>"
+                else:
+                    # Fallback to just method if no operation ID (no summary)
+                    method_text = f"<b>{method_upper}</b>"
                 story.append(Paragraph(method_text, styles['Heading3']))
                 
                 # Tags
@@ -315,13 +315,27 @@ class PDFWordExporter:
                 story.append(Spacer(1, 0.15*inch))
         
         # Components Schemas
-        schemas = self.components.get('schemas', {})
+        schemas = self.components.get('schemas', {}).copy()
+        
+        # Extract inline nested objects from all schemas and add them to schemas dict
+        extracted_schemas = {}
+        # Map to track which extracted schema corresponds to which inline object path
+        extracted_schema_map = {}  # Maps (parent_name, prop_name) -> schema_name
+        
+        for schema_name, schema in schemas.items():
+            self._extract_nested_schemas(schema, extracted_schemas, extracted_schema_map, parent_name=schema_name)
+        
+        # Merge extracted schemas into main schemas dict
+        schemas.update(extracted_schemas)
+        
         if schemas:
             story.append(PageBreak())
             story.append(Paragraph('<b>Data Models</b>', styles['Heading1']))
             story.append(Spacer(1, 0.2*inch))
             
-            for schema_name, schema in schemas.items():
+            # Sort schemas: root schemas first, then nested schemas
+            root_schemas = {k: v for k, v in schemas.items() if k not in extracted_schemas}
+            for schema_name, schema in root_schemas.items():
                 story.append(Paragraph(f"<b>{schema_name}</b>", styles['Heading2']))
                 
                 schema_type = schema.get('type', 'object')
@@ -341,18 +355,49 @@ class PDFWordExporter:
                     story.append(Paragraph("<b>Properties:</b>", styles['Normal']))
                     prop_data = [['Property', 'Type', 'Required', 'Description']]
                     for prop_name, prop_schema in properties.items():
-                        prop_type = prop_schema.get('type', 'string')
                         prop_ref = prop_schema.get('$ref', '')
+                        prop_type = prop_schema.get('type', '')
+                        
+                        # Check for $ref first (schema reference)
                         if prop_ref:
+                            # Reference to another schema - show schema name
                             prop_type = prop_ref.split('/')[-1]
                         elif prop_schema.get('items'):
+                            # Array type
                             items = prop_schema.get('items', {})
                             items_type = items.get('type', 'object')
                             items_ref = items.get('$ref', '')
                             if items_ref:
                                 prop_type = f"array[{items_ref.split('/')[-1]}]"
+                            elif items_type == 'object' and items.get('properties'):
+                                # Inline nested object in array - check if it was extracted
+                                extracted_name = extracted_schema_map.get((schema_name, f"{prop_name}Item"))
+                                if extracted_name:
+                                    prop_type = f"array[{extracted_name}]"
+                                else:
+                                    nested_props_count = len(items.get('properties', {}))
+                                    prop_type = f"array[object ({nested_props_count} properties)]"
                             else:
                                 prop_type = f"array[{items_type}]"
+                        elif prop_type == 'object' or (not prop_type and prop_schema.get('properties')):
+                            # Inline nested object - check if it was extracted as a separate schema
+                            nested_props = prop_schema.get('properties', {})
+                            if nested_props:
+                                # Check if this inline object was extracted as a separate schema
+                                extracted_name = extracted_schema_map.get((schema_name, prop_name))
+                                if extracted_name:
+                                    prop_type = extracted_name
+                                else:
+                                    # Fallback: show object with properties count
+                                    nested_props_count = len(nested_props)
+                                    prop_type = f"object ({nested_props_count} properties)"
+                            else:
+                                # No properties, just show as object
+                                prop_type = 'object'
+                        elif not prop_type:
+                            # Fallback if no type specified
+                            prop_type = 'string'
+                        
                         prop_required = 'Yes' if prop_name in required_fields else 'No'
                         prop_desc = prop_schema.get('description', '')
                         prop_data.append([prop_name, prop_type, prop_required, prop_desc])
@@ -477,20 +522,16 @@ class PDFWordExporter:
                 description = operation.get('description', '')
                 tags = operation.get('tags', [])
                 
-                # Method, summary, and operation ID
+                # Use operation ID only (e.g., "getUserId", "createUser")
                 method_para = doc.add_paragraph()
-                method_text = f"{method_upper}"
-                if summary:
-                    method_text += f" - {summary}"
+                if operation_id:
+                    method_text = operation_id
+                else:
+                    # Fallback to just method if no operation ID (no summary)
+                    method_text = f"{method_upper}"
                 method_run = method_para.add_run(method_text)
                 method_run.bold = True
                 method_run.font.size = Pt(12)
-                
-                if operation_id:
-                    id_para = doc.add_paragraph()
-                    id_run = id_para.add_run(f"Operation ID: {operation_id}")
-                    id_run.italic = True
-                    id_run.font.size = Pt(10)
                 
                 # Tags
                 if tags:
@@ -618,12 +659,25 @@ class PDFWordExporter:
                 doc.add_paragraph()
         
         # Components Schemas
-        schemas = self.components.get('schemas', {})
+        schemas = self.components.get('schemas', {}).copy()
+        
+        # Extract inline nested objects from all schemas and add them to schemas dict
+        extracted_schemas = {}
+        extracted_schema_map = {}  # Maps (parent_name, prop_name) -> schema_name
+        
+        for schema_name, schema in schemas.items():
+            self._extract_nested_schemas(schema, extracted_schemas, extracted_schema_map, parent_name=schema_name)
+        
+        # Merge extracted schemas into main schemas dict
+        schemas.update(extracted_schemas)
+        
         if schemas:
             doc.add_page_break()
             doc.add_heading('Data Models', level=1)
             
-            for schema_name, schema in schemas.items():
+            # Sort schemas: root schemas first, then nested schemas
+            root_schemas = {k: v for k, v in schemas.items() if k not in extracted_schemas}
+            for schema_name, schema in root_schemas.items():
                 doc.add_heading(schema_name, level=2)
                 
                 schema_type = schema.get('type', 'object')
@@ -650,18 +704,50 @@ class PDFWordExporter:
                     for prop_name, prop_schema in properties.items():
                         row = prop_table.add_row()
                         row.cells[0].text = prop_name
-                        prop_type = prop_schema.get('type', 'string')
+                        
                         prop_ref = prop_schema.get('$ref', '')
+                        prop_type = prop_schema.get('type', '')
+                        
+                        # Check for $ref first (schema reference)
                         if prop_ref:
+                            # Reference to another schema - show schema name
                             prop_type = prop_ref.split('/')[-1]
                         elif prop_schema.get('items'):
+                            # Array type
                             items = prop_schema.get('items', {})
                             items_type = items.get('type', 'object')
                             items_ref = items.get('$ref', '')
                             if items_ref:
                                 prop_type = f"array[{items_ref.split('/')[-1]}]"
+                            elif items_type == 'object' and items.get('properties'):
+                                # Inline nested object in array - check if it was extracted
+                                extracted_name = extracted_schema_map.get((schema_name, f"{prop_name}Item"))
+                                if extracted_name:
+                                    prop_type = f"array[{extracted_name}]"
+                                else:
+                                    nested_props_count = len(items.get('properties', {}))
+                                    prop_type = f"array[object ({nested_props_count} properties)]"
                             else:
                                 prop_type = f"array[{items_type}]"
+                        elif prop_type == 'object' or (not prop_type and prop_schema.get('properties')):
+                            # Inline nested object - check if it was extracted as a separate schema
+                            nested_props = prop_schema.get('properties', {})
+                            if nested_props:
+                                # Check if this inline object was extracted as a separate schema
+                                extracted_name = extracted_schema_map.get((schema_name, prop_name))
+                                if extracted_name:
+                                    prop_type = extracted_name
+                                else:
+                                    # Fallback: show object with properties count
+                                    nested_props_count = len(nested_props)
+                                    prop_type = f"object ({nested_props_count} properties)"
+                            else:
+                                # No properties, just show as object
+                                prop_type = 'object'
+                        elif not prop_type:
+                            # Fallback if no type specified
+                            prop_type = 'string'
+                        
                         row.cells[1].text = prop_type
                         row.cells[2].text = 'Yes' if prop_name in required_fields else 'No'
                         row.cells[3].text = prop_schema.get('description', '')
@@ -682,9 +768,175 @@ class PDFWordExporter:
                         run.font.size = Pt(9)
                 
                 doc.add_paragraph()
+            
+            # Now display extracted nested schemas
+            if extracted_schemas:
+                doc.add_paragraph()
+                doc.add_heading('Nested Object Schemas', level=2)
+                doc.add_paragraph()
+                
+                for schema_name, schema in sorted(extracted_schemas.items()):
+                    doc.add_heading(schema_name, level=3)
+                    
+                    schema_type = schema.get('type', 'object')
+                    schema_desc = schema.get('description', '')
+                    
+                    if schema_desc:
+                        doc.add_paragraph(schema_desc)
+                    
+                    doc.add_paragraph(f"Type: {schema_type}")
+                    
+                    # Properties
+                    properties = schema.get('properties', {})
+                    required_fields = schema.get('required', [])
+                    
+                    if properties:
+                        doc.add_heading('Properties', level=4)
+                        prop_table = doc.add_table(rows=1, cols=4)
+                        prop_table.style = 'Light Grid Accent 1'
+                        prop_table.rows[0].cells[0].text = 'Property'
+                        prop_table.rows[0].cells[1].text = 'Type'
+                        prop_table.rows[0].cells[2].text = 'Required'
+                        prop_table.rows[0].cells[3].text = 'Description'
+                        
+                        for prop_name, prop_schema in properties.items():
+                            row = prop_table.add_row()
+                            row.cells[0].text = prop_name
+                            
+                            prop_ref = prop_schema.get('$ref', '')
+                            prop_type = prop_schema.get('type', '')
+                            
+                            if prop_ref:
+                                prop_type = prop_ref.split('/')[-1]
+                            elif prop_schema.get('items'):
+                                items = prop_schema.get('items', {})
+                                items_type = items.get('type', 'object')
+                                items_ref = items.get('$ref', '')
+                                if items_ref:
+                                    prop_type = f"array[{items_ref.split('/')[-1]}]"
+                                elif items_type == 'object' and items.get('properties'):
+                                    # Inline nested object in array - check if it was extracted
+                                    extracted_name = extracted_schema_map.get((schema_name, f"{prop_name}Item"))
+                                    if extracted_name:
+                                        prop_type = f"array[{extracted_name}]"
+                                    else:
+                                        nested_props_count = len(items.get('properties', {}))
+                                        prop_type = f"array[object ({nested_props_count} properties)]"
+                                else:
+                                    prop_type = f"array[{items_type}]"
+                            elif prop_type == 'object' or (not prop_type and prop_schema.get('properties')):
+                                # Inline nested object - check if it was extracted as a separate schema
+                                nested_props = prop_schema.get('properties', {})
+                                if nested_props:
+                                    # Check if this inline object was extracted as a separate schema
+                                    extracted_name = extracted_schema_map.get((schema_name, prop_name))
+                                    if extracted_name:
+                                        prop_type = extracted_name
+                                    else:
+                                        nested_props_count = len(nested_props)
+                                        prop_type = f"object ({nested_props_count} properties)"
+                                else:
+                                    prop_type = 'object'
+                            elif not prop_type:
+                                # Fallback if no type specified
+                                prop_type = 'string'
+                            
+                            row.cells[1].text = prop_type
+                            row.cells[2].text = 'Yes' if prop_name in required_fields else 'No'
+                            row.cells[3].text = prop_schema.get('description', '')
+                        doc.add_paragraph()
+                    
+                    doc.add_paragraph()
         
         doc.save(output_file)
         return True
+    
+    def _extract_nested_schemas(self, schema: Dict[str, Any], extracted_schemas: Dict[str, Any], extracted_schema_map: Dict[tuple, str], parent_name: str = "", counter: int = 1):
+        """Recursively extract inline nested objects from a schema.
+        
+        Args:
+            schema: Schema dictionary to extract from
+            extracted_schemas: Dictionary to store extracted schemas
+            extracted_schema_map: Dictionary mapping (parent_name, prop_name) -> schema_name
+            parent_name: Name of parent schema (for naming nested schemas)
+            counter: Counter for unique naming
+        """
+        if not isinstance(schema, dict):
+            return
+        
+        properties = schema.get('properties', {})
+        for prop_name, prop_schema in properties.items():
+            prop_ref = prop_schema.get('$ref', '')
+            prop_type = prop_schema.get('type', '')
+            
+            # If it's an inline nested object (not a reference)
+            if not prop_ref and (prop_type == 'object' or (not prop_type and prop_schema.get('properties'))):
+                nested_props = prop_schema.get('properties', {})
+                if nested_props:
+                    # Generate a schema name
+                    schema_name = self._generate_nested_schema_name(prop_name, parent_name, counter)
+                    counter += 1
+                    
+                    # Store the nested schema
+                    extracted_schemas[schema_name] = prop_schema.copy()
+                    
+                    # Map this inline object to its extracted schema name
+                    extracted_schema_map[(parent_name, prop_name)] = schema_name
+                    
+                    # Recursively extract nested objects from this nested schema
+                    self._extract_nested_schemas(prop_schema, extracted_schemas, extracted_schema_map, schema_name, counter)
+            
+            # Check arrays with nested objects
+            elif prop_schema.get('items'):
+                items = prop_schema.get('items', {})
+                items_ref = items.get('$ref', '')
+                items_type = items.get('type', 'object')
+                
+                if not items_ref and items_type == 'object' and items.get('properties'):
+                    # Generate a schema name for array item
+                    schema_name = self._generate_nested_schema_name(prop_name, parent_name, counter, is_array=True)
+                    counter += 1
+                    
+                    # Store the nested schema
+                    extracted_schemas[schema_name] = items.copy()
+                    
+                    # Map this array item to its extracted schema name
+                    extracted_schema_map[(parent_name, f"{prop_name}Item")] = schema_name
+                    
+                    # Recursively extract nested objects
+                    self._extract_nested_schemas(items, extracted_schemas, extracted_schema_map, schema_name, counter)
+    
+    def _generate_nested_schema_name(self, prop_name: str, parent_name: str, counter: int, is_array: bool = False) -> str:
+        """Generate a name for a nested schema.
+        
+        Args:
+            prop_name: Property name (e.g., 'payment_method')
+            parent_name: Parent schema name (e.g., 'CreateUserRequest')
+            counter: Counter for uniqueness
+            is_array: Whether this is for an array item
+            
+        Returns:
+            Schema name (e.g., 'PaymentMethod', 'CreateUserRequestPaymentMethod')
+        """
+        # Convert property name to PascalCase
+        name_parts = prop_name.replace('_', ' ').title().replace(' ', '')
+        
+        if parent_name:
+            # Try to create a meaningful name
+            base_name = parent_name.replace('Request', '').replace('Response', '')
+            schema_name = f"{base_name}{name_parts}"
+        else:
+            schema_name = name_parts
+        
+        if is_array:
+            schema_name = f"{schema_name}Item"
+        
+        # Ensure uniqueness
+        existing_schemas = self.components.get('schemas', {})
+        if schema_name in existing_schemas:
+            schema_name = f"{schema_name}{counter}"
+        
+        return schema_name
     
     def _generate_html_content(self) -> str:
         """Generate HTML content for PDF export."""
@@ -784,10 +1036,16 @@ class PDFWordExporter:
                     continue
                 
                 method_upper = method.upper()
+                operation_id = operation.get('operationId', '')
                 summary = operation.get('summary', '')
                 description = operation.get('description', '')
                 
-                html += f'<p><span class="method {method.lower()}">{method_upper}</span> {summary}</p>'
+                # Use operation ID only (e.g., "getUserId", "createUser")
+                if operation_id:
+                    html += f'<p><span class="method {method.lower()}">{operation_id}</span></p>'
+                else:
+                    # Fallback to just method if no operation ID
+                    html += f'<p><span class="method {method.lower()}">{method_upper}</span></p>'
                 if description:
                     html += f"<p>{description}</p>"
         

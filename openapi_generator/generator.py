@@ -130,7 +130,26 @@ class OpenAPIGenerator:
                         "nullable": True
                     }
                 else:
-                    properties[converted_key] = self.infer_schema_from_json(value, required=False, is_root=False, field_name=converted_key)
+                    nested_schema = self.infer_schema_from_json(value, required=False, is_root=False, field_name=converted_key)
+                    
+                    # Extract nested objects into separate schemas for better documentation
+                    # If it's a nested object with properties (and not already a reference), extract it as a separate schema
+                    if isinstance(nested_schema, dict) and "$ref" not in nested_schema:
+                        if nested_schema.get("type") == "object" and nested_schema.get("properties"):
+                            # Generate a schema name for the nested object
+                            nested_schema_name = self.generate_schema_name(converted_key.replace('_', ' ').title().replace(' ', ''))
+                            
+                            # Store nested object as separate schema in components
+                            self.components_schemas[nested_schema_name] = nested_schema
+                            
+                            # Return reference to the nested schema
+                            properties[converted_key] = {"$ref": f"#/components/schemas/{nested_schema_name}"}
+                        else:
+                            # For non-object types or simple objects, use inline schema
+                            properties[converted_key] = nested_schema
+                    else:
+                        # Already a reference or not a dict, use as-is
+                        properties[converted_key] = nested_schema
                 
                 if required and value is not None:
                     required_fields.append(converted_key)
@@ -154,7 +173,7 @@ class OpenAPIGenerator:
                 # Return reference
                 return {"$ref": f"#/components/schemas/{schema_name}"}
             else:
-                # Return inline schema for nested objects
+                # Return inline schema for nested objects (but nested objects inside are already extracted)
                 return schema
         
         elif isinstance(json_data, list):
@@ -180,12 +199,18 @@ class OpenAPIGenerator:
                     "items": item_schema
                 }
             
-            # If item is a complex object, we might want to store it
+            # If item is a complex object, extract it as a separate schema for better documentation
             if isinstance(item_schema, dict) and item_schema.get("type") == "object" and item_schema.get("properties"):
-                # For nested objects in arrays, keep them inline unless explicitly requested
+                # Generate a schema name for the nested object in array
+                array_item_schema_name = self.generate_schema_name((field_name or "Item").replace('_', ' ').title().replace(' ', ''))
+                
+                # Store nested object as separate schema in components
+                self.components_schemas[array_item_schema_name] = item_schema
+                
+                # Return array with reference to the nested schema
                 return {
                     "type": "array",
-                    "items": item_schema
+                    "items": {"$ref": f"#/components/schemas/{array_item_schema_name}"}
                 }
             
             return {
@@ -994,6 +1019,26 @@ class OpenAPIGenerator:
         
         return operation
     
+    @staticmethod
+    def normalize_path(path: str) -> str:
+        """Normalize API path to ensure it starts with '/'.
+        
+        OpenAPI specification requires all paths to start with '/'.
+        This function ensures compliance with the specification.
+        
+        Args:
+            path: Path string (may or may not start with '/')
+            
+        Returns:
+            Normalized path that starts with '/'
+        """
+        if not path:
+            return '/'
+        # Ensure path starts with '/'
+        if not path.startswith('/'):
+            return '/' + path
+        return path
+    
     def create_openapi_document(
         self,
         operations: List[Dict[str, Any]],
@@ -1017,6 +1062,8 @@ class OpenAPIGenerator:
         for op in operations:
             method = op["method"].lower()
             path = op["path"]
+            # Normalize path to ensure it starts with '/'
+            path = self.normalize_path(path)
             operation_data = op["operation"]
             
             if path not in paths:
@@ -1147,6 +1194,9 @@ class OpenAPIGenerator:
         self.schema_counter = {}
         self.field_value_tracker = {}
         
+        # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+        path = self.normalize_path(path)
+        
         operation = self.generate_openapi_spec(
             method=method,
             path=path,
@@ -1184,5 +1234,11 @@ class OpenAPIGenerator:
             
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write(yaml_output)
+                f.flush()  # Ensure data is written to OS buffer
+                # Force file system sync to ensure data is on disk
+                try:
+                    os.fsync(f.fileno())  # Force write to disk
+                except:
+                    pass  # If fsync fails, continue anyway (not supported on all systems)
         
         return yaml_output

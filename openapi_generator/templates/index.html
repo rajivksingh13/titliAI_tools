@@ -72,6 +72,128 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
         }
+        
+        /* Theme Toggle Button */
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            margin: 0;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: scale(1.05);
+        }
+        
+        .theme-toggle svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.3s ease;
+            display: block;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .theme-toggle:hover svg {
+            transform: translate(-50%, -50%) rotate(15deg);
+        }
+        
+        .theme-toggle #sunIcon,
+        .theme-toggle #moonIcon {
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* Light Mode Styles */
+        body.light-mode {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --bg-hover: #e2e8f0;
+            --bg-active: rgba(59, 130, 246, 0.1);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --border: #e2e8f0;
+            --border-light: #cbd5e1;
+            --border-hover: #94a3b8;
+        }
+        
+        body.light-mode .top-bar {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-mode .left-sidebar {
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+        }
+        
+        body.light-mode .copyright-watermark {
+            border-top-color: #e2e8f0;
+        }
+        
+        body.light-mode .copyright-watermark p {
+            color: #64748b;
+        }
+        
+        body.light-mode .theme-toggle {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #0f172a;
+        }
+        
+        body.light-mode .center-content {
+            background: #ffffff;
+        }
+        
+        body.light-mode .sidebar-section {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+        
+        body.light-mode .sidebar-section-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border-left: 3px solid var(--primary);
+        }
+        
+        body.light-mode .sidebar-item {
+            color: var(--text-primary);
+        }
+        
+        body.light-mode .sidebar-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        body.light-mode .sidebar-button {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            color: var(--text-primary);
+        }
+        
+        body.light-mode .sidebar-button:hover {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-color: var(--primary);
+        }
 
         .top-bar-title {
             font-size: 0.9375rem;
@@ -83,8 +205,10 @@
             letter-spacing: 0.3px;
         }
         
-        .top-bar-title span:first-child {
-            font-size: 1.25rem;
+        .top-bar-title img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
             filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
         }
 
@@ -413,6 +537,31 @@
         .center-content select:focus {
             border-color: #007acc;
             box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+            background: #ffffff;
+            color: #0f172a;
+        }
+        
+        /* Text selection for center content textareas and inputs */
+        .center-content textarea::selection {
+            background-color: #007acc;
+            color: #ffffff;
+        }
+        
+        .center-content textarea::-moz-selection {
+            background-color: #007acc;
+            color: #ffffff;
+        }
+        
+        .center-content input[type="text"]::selection,
+        .center-content input[type="url"]::selection {
+            background-color: #007acc;
+            color: #ffffff;
+        }
+        
+        .center-content input[type="text"]::-moz-selection,
+        .center-content input[type="url"]::-moz-selection {
+            background-color: #007acc;
+            color: #ffffff;
         }
         
         .center-content .file-upload {
@@ -447,6 +596,217 @@
         .center-content .file-preview {
             background: #f8fafc;
             color: #475569;
+        }
+        
+        /* Upload JSON Section Buttons */
+        .json-upload-buttons {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .json-upload-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid;
+            /* Default: all buttons start as white/inactive */
+            background: #ffffff;
+            border-color: #e2e8f0;
+            color: #0f172a;
+        }
+        
+        .json-upload-btn:hover:not(.active) {
+            background: #e0e7ff;
+            border-color: #3b82f6;
+            color: #1e40af;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Active state: blue (#2563eb) for active buttons */
+        .json-upload-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: white;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3), 0 2px 8px rgba(37, 99, 235, 0.4);
+            transform: translateY(0);
+            font-weight: 600;
+        }
+        
+        .json-upload-btn.active:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3), 0 2px 8px rgba(37, 99, 235, 0.4);
+        }
+        
+        /* Drag Drop Zone for Upload JSON */
+        .json-drag-drop-zone {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 2rem;
+            border: 2px dashed #cbd5e1;
+            border-radius: 6px;
+            background: #f8fafc;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .json-drag-drop-zone.drag-active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .json-drag-drop-zone span:first-child {
+            font-size: 2rem;
+            opacity: 0.7;
+        }
+        
+        .json-drag-drop-zone p {
+            margin: 0;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        .json-drag-drop-zone span:last-child {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        
+        /* JSON Input Tabs */
+        .json-input-tabs {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            background: #f1f5f9;
+            padding: 0.25rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .json-input-tab {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .json-input-tab:hover {
+            color: #0f172a;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .json-input-tab.active {
+            color: #ffffff;
+            background: #007acc;
+            box-shadow: 0 2px 4px rgba(0, 122, 204, 0.2);
+        }
+        
+        .json-input-content {
+            display: none;
+        }
+        
+        .json-input-content.active {
+            display: block;
+        }
+        
+        /* JSON Paste Area */
+        .json-paste-area {
+            width: 100%;
+            min-height: 150px;
+            padding: 0.75rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #0f172a;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            resize: vertical;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .json-paste-area:focus {
+            outline: none;
+            border-color: #007acc;
+            box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.1), inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .json-paste-area::placeholder {
+            color: #94a3b8;
+            opacity: 0.7;
+        }
+        
+        .json-paste-area::selection {
+            background-color: #007acc !important;
+            color: #ffffff !important;
+        }
+        
+        .json-paste-area::-moz-selection {
+            background-color: #007acc !important;
+            color: #ffffff !important;
+        }
+        
+        /* Drag Drop Zone */
+        .drag-drop-zone {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 2rem;
+            border: 2px dashed #cbd5e1;
+            border-radius: 6px;
+            background: #f8fafc;
+            transition: all 0.2s ease;
+        }
+        
+        .drag-drop-zone.drag-active {
+            border-color: #007acc;
+            background: rgba(0, 122, 204, 0.05);
+            box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.1);
+        }
+        
+        .drag-drop-zone span:first-child {
+            font-size: 2rem;
+            opacity: 0.7;
+        }
+        
+        .drag-drop-zone p {
+            margin: 0;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        .drag-drop-zone span:last-child {
+            font-size: 0.75rem;
+            color: #94a3b8;
         }
         
         /* Tooltip Styles */
@@ -965,6 +1325,128 @@
             min-height: 80px;
             font-family: 'JetBrains Mono', 'Consolas', monospace;
             resize: vertical;
+            background: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Ensure textarea maintains readable colors when focused, active, or clicked */
+        textarea:focus,
+        textarea:active,
+        textarea:focus-visible {
+            background: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Prevent textarea from becoming black on click */
+        textarea:not(.center-content textarea) {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        textarea:not(.center-content textarea):focus,
+        textarea:not(.center-content textarea):active {
+            background-color: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Text selection styles for textarea - ensure visibility */
+        textarea::selection {
+            background-color: var(--primary) !important;
+            color: #ffffff !important;
+        }
+        
+        textarea::-moz-selection {
+            background-color: var(--primary) !important;
+            color: #ffffff !important;
+        }
+        
+        /* Caret color for better visibility */
+        textarea {
+            caret-color: var(--primary) !important;
+        }
+        
+        .center-content textarea {
+            caret-color: #007acc !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+        }
+        
+        .center-content textarea:focus,
+        .center-content textarea:active {
+            background: #ffffff !important;
+            color: #0f172a !important;
+        }
+        
+        /* Text selection for all inputs and textareas */
+        input[type="text"]::selection,
+        input[type="url"]::selection,
+        textarea::selection {
+            background-color: var(--primary) !important;
+            color: #ffffff !important;
+        }
+        
+        input[type="text"]::-moz-selection,
+        input[type="url"]::-moz-selection,
+        textarea::-moz-selection {
+            background-color: var(--primary) !important;
+            color: #ffffff !important;
+        }
+        
+        /* Center content selection styles */
+        .center-content input[type="text"]::selection,
+        .center-content input[type="url"]::selection,
+        .center-content textarea::selection {
+            background-color: #007acc !important;
+            color: #ffffff !important;
+        }
+        
+        .center-content input[type="text"]::-moz-selection,
+        .center-content input[type="url"]::-moz-selection,
+        .center-content textarea::-moz-selection {
+            background-color: #007acc !important;
+            color: #ffffff !important;
+        }
+        
+        /* Fix for all textareas - prevent black background on click/focus */
+        textarea[name="description"],
+        textarea[name="api_description"],
+        textarea#newOpDesc,
+        textarea#multiApiDesc {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        textarea[name="description"]:focus,
+        textarea[name="description"]:active,
+        textarea[name="api_description"]:focus,
+        textarea[name="api_description"]:active,
+        textarea#newOpDesc:focus,
+        textarea#newOpDesc:active,
+        textarea#multiApiDesc:focus,
+        textarea#multiApiDesc:active {
+            background-color: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Ensure center-content textareas maintain white background */
+        .center-content textarea[name="description"],
+        .center-content textarea[name="api_description"],
+        .center-content textarea#newOpDesc,
+        .center-content textarea#multiApiDesc {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+        
+        .center-content textarea[name="description"]:focus,
+        .center-content textarea[name="description"]:active,
+        .center-content textarea[name="api_description"]:focus,
+        .center-content textarea[name="api_description"]:active,
+        .center-content textarea#newOpDesc:focus,
+        .center-content textarea#newOpDesc:active,
+        .center-content textarea#multiApiDesc:focus,
+        .center-content textarea#multiApiDesc:active {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
         }
         .file-upload {
             border: 2px dashed var(--primary);
@@ -1476,9 +1958,18 @@
     <!-- Top Bar -->
     <div class="top-bar">
         <div class="top-bar-title">
-            <span>📝</span>
+            <img src="/static/AutoGen.png" alt="OpenAPI AutoGen" style="width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));">
             <span>OpenAPI AutoGen</span>
         </div>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle light/dark mode">
+            <svg id="sunIcon" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 1v3M12 20v3M23 12h-3M4 12H1M20.364 3.636l-2.121 2.121M5.757 18.243l-2.121 2.121M20.364 20.364l-2.121-2.121M5.757 5.757l-2.121-2.121" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg id="moonIcon" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Main Layout -->
@@ -1510,7 +2001,7 @@
                 <div class="sidebar-section-header" onclick="toggleSidebarSection(this)">
                     <div class="sidebar-section-title">
                         <span class="sidebar-section-chevron">▶</span>
-                        <span>Import APIs From Existing Sources</span>
+                        <span>Import Existing APIs</span>
                     </div>
                 </div>
                 <div class="sidebar-section-content">
@@ -1520,6 +2011,60 @@
                     </div>
                     <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">
                         Postman, OpenAPI, cURL, HAR, AWS, Azure, Kong
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-header" onclick="toggleSidebarSection(this)">
+                    <div class="sidebar-section-title">
+                        <span class="sidebar-section-chevron">▶</span>
+                        <span>Export & Validation</span>
+                    </div>
+                </div>
+                <div class="sidebar-section-content">
+                    <div class="sidebar-item" onclick="showPostmanExportDialog()">
+                        <span>📤</span>
+                        <span>Export OpenAPI to Postman Collection</span>
+                    </div>
+                    <div class="sidebar-item" onclick="showPDFWordExportDialog()">
+                        <span>📑</span>
+                        <span>Export OpenAPI to PDF/Word</span>
+                    </div>
+                    <div class="sidebar-item" onclick="showHTMLDocsExportDialog()">
+                        <span>📄</span>
+                        <span>Generate HTML Docs From API Specification</span>
+                    </div>
+                    <div class="sidebar-item" onclick="triggerValidation()">
+                        <span>✓</span>
+                        <span>Validate API Specification</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-header" onclick="toggleSidebarSection(this)">
+                    <div class="sidebar-section-title">
+                        <span class="sidebar-section-chevron">▶</span>
+                        <span>Client Code Generation</span>
+                    </div>
+                </div>
+                <div class="sidebar-section-content">
+                    <div class="sidebar-item" data-client-lang="java" onclick="window.showClientCodeDialog('java')" style="cursor: pointer;">
+                        <span>☕</span>
+                        <span>Java Client Code</span>
+                    </div>
+                    <div class="sidebar-item" data-client-lang="python" onclick="window.showClientCodeDialog('python')" style="cursor: pointer;">
+                        <span>🐍</span>
+                        <span>Python Client Code</span>
+                    </div>
+                    <div class="sidebar-item" data-client-lang="dotnet" onclick="window.showClientCodeDialog('dotnet')" style="cursor: pointer;">
+                        <span>🔷</span>
+                        <span>.NET Client Code</span>
+                    </div>
+                    <div class="sidebar-item" data-client-lang="go" onclick="window.showClientCodeDialog('go')" style="cursor: pointer;">
+                        <span>🐹</span>
+                        <span>Go Client Code</span>
                     </div>
                 </div>
             </div>
@@ -1580,60 +2125,6 @@
                 </button>
 
                     <div id="git-status" style="margin-top: 1rem;"></div>
-                </div>
-            </div>
-
-            <div class="sidebar-section">
-                <div class="sidebar-section-header" onclick="toggleSidebarSection(this)">
-                    <div class="sidebar-section-title">
-                        <span class="sidebar-section-chevron">▶</span>
-                        <span>Export & Validation</span>
-                    </div>
-                </div>
-                <div class="sidebar-section-content">
-                    <div class="sidebar-item" onclick="showPostmanExportDialog()">
-                        <span>📤</span>
-                        <span>Export OpenAPI to Postman Collection</span>
-                    </div>
-                    <div class="sidebar-item" onclick="showPDFWordExportDialog()">
-                        <span>📑</span>
-                        <span>Export OpenAPI to PDF/Word</span>
-                    </div>
-                    <div class="sidebar-item" onclick="showHTMLDocsExportDialog()">
-                        <span>📄</span>
-                        <span>Generate HTML Docs From API Specification</span>
-                    </div>
-                    <div class="sidebar-item" onclick="triggerValidation()">
-                        <span>✓</span>
-                        <span>Validate API Specification</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="sidebar-section">
-                <div class="sidebar-section-header" onclick="toggleSidebarSection(this)">
-                    <div class="sidebar-section-title">
-                        <span class="sidebar-section-chevron">▶</span>
-                        <span>Client Code Generation</span>
-                    </div>
-                </div>
-                <div class="sidebar-section-content">
-                    <div class="sidebar-item" data-client-lang="java" onclick="window.showClientCodeDialog('java')" style="cursor: pointer;">
-                        <span>☕</span>
-                        <span>Java Client Code</span>
-                    </div>
-                    <div class="sidebar-item" data-client-lang="python" onclick="window.showClientCodeDialog('python')" style="cursor: pointer;">
-                        <span>🐍</span>
-                        <span>Python Client Code</span>
-                    </div>
-                    <div class="sidebar-item" data-client-lang="dotnet" onclick="window.showClientCodeDialog('dotnet')" style="cursor: pointer;">
-                        <span>🔷</span>
-                        <span>.NET Client Code</span>
-                    </div>
-                    <div class="sidebar-item" data-client-lang="go" onclick="window.showClientCodeDialog('go')" style="cursor: pointer;">
-                        <span>🐹</span>
-                        <span>Go Client Code</span>
-                    </div>
                 </div>
             </div>
 
@@ -1706,13 +2197,24 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Copyright Watermark -->
+            <div class="copyright-watermark" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center;">
+                <p style="font-size: 0.6875rem; color: var(--text-tertiary); margin: 0; line-height: 1.4; opacity: 0.7;">
+                    © 2026 OpenAPI AutoGen<br>
+                    <span style="font-size: 0.625rem;">All rights reserved</span>
+                </p>
+            </div>
         </div>
 
         <!-- Center Content -->
         <div class="center-content">
             <div class="content-header">
-                <h1>OpenAPI Specification AutoGen</h1>
-                <p>Create professional OpenAPI 3.1.0 specifications from JSON files</p>
+                <h1 style="display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+                    <img src="/static/AutoGen.png" alt="OpenAPI AutoGen" style="width: 40px; height: 40px; object-fit: contain;">
+                    <span>OpenAPI Specification AutoGen</span>
+                </h1>
+                <p>From JSON to OpenAPI YAML: Professional Specs Made Simple</p>
             </div>
 
             <div class="content-body">
@@ -1754,7 +2256,7 @@
                     <div class="form-group">
                         <label>📌 Tags</label>
                         <label>Tags (Optional)</label>
-                        <input type="text" name="tags" placeholder="user, pet, order">
+                        <input type="text" name="tags" placeholder="user">
                     </div>
                 </div>
                 
@@ -1765,38 +2267,110 @@
                 
                 <hr>
                 
-                <div class="sub-header">📤 Step 2: Upload JSON Files</div>
+                <div class="sub-header" style="text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9375rem;">STEP 2: UPLOAD JSON FILES</div>
                 
                 <div class="row">
                     <div class="form-group" style="display: flex; flex-direction: column;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 700; color: #0f172a;">
                             <span>📥</span>
-                            <span>Response JSON File</span>
+                            <span>Response JSON</span>
                             <span style="color: var(--error); font-size: 0.75rem;">*</span>
                         </label>
-                        <p style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.625rem; margin-top: 0;">Upload the JSON response your API returns</p>
-                        <div class="file-upload" onclick="document.getElementById('responseFile').click()">
-                            <input type="file" id="responseFile" name="response_file" accept=".json" onchange="handleFileSelect(this, 'responsePreview')">
-                            <span style="font-size: 0.875rem;">📁</span>
-                            <p style="display: inline; margin: 0;">Click to upload or drag and drop</p>
-                            <span style="font-size: 0.6875rem; color: rgba(255, 255, 255, 0.8); margin-left: 0.25rem;">• JSON only</span>
+                        <p style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.75rem; margin-top: 0;">Upload, paste, or drag & drop JSON response</p>
+                        
+                        <!-- Upload and Paste Buttons -->
+                        <div class="json-upload-buttons">
+                            <button type="button" class="json-upload-btn active" onclick="switchJsonInputMethod('response', 'upload')" id="responseUploadBtn">
+                                <span>📁</span>
+                                <span>Upload or Drag Drop</span>
+                            </button>
+                            <button type="button" class="json-upload-btn" onclick="switchJsonInputMethod('response', 'paste')" id="responsePasteBtn">
+                                <span>📋</span>
+                                <span>Paste</span>
+                            </button>
                         </div>
+                        
+                        <!-- Upload or Drag Drop Method -->
+                        <div id="responseUpload" class="json-input-content">
+                            <div class="json-drag-drop-zone" 
+                                 onclick="document.getElementById('responseFile').click()"
+                                 ondrop="handleDrop(event, 'responseFile', 'responsePreview')" 
+                                 ondragover="handleDragOver(event)" 
+                                 ondragleave="handleDragLeave(event)">
+                                <input type="file" id="responseFile" name="response_file" accept=".json" onchange="handleFileSelect(this, 'responsePreview')" style="display: none;">
+                                <span>📁</span>
+                                <p>Click to upload or drag and drop</p>
+                                <span>• JSON only</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Paste Method -->
+                        <div id="responsePaste" class="json-input-content">
+                            <textarea id="responsePasteArea" class="json-paste-area" 
+                                      placeholder="Paste your JSON response here...&#10;&#10;Example:&#10;{&#10;  &quot;id&quot;: 1,&#10;  &quot;name&quot;: &quot;Example&quot;&#10;}"
+                                      onpaste="handlePaste(event, 'responsePasteArea', 'responsePreview')"
+                                      ondrop="handleTextDrop(event, 'responsePasteArea', 'responsePreview')"
+                                      ondragover="handleDragOver(event)"
+                                      ondragleave="handleDragLeave(event)"></textarea>
+                            <button type="button" class="sidebar-button" onclick="processPastedJson('responsePasteArea', 'responsePreview', 'responseFile')" style="margin-top: 0.5rem; width: 100%;">
+                                <span>✓</span>
+                                <span>Use Pasted JSON</span>
+                            </button>
+                        </div>
+                        
                         <div id="responsePreview" class="file-preview" style="display: none; margin-top: 0.75rem;"></div>
                     </div>
                     
                     <div class="form-group" style="display: flex; flex-direction: column;">
-                        <label id="requestLabel" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <label id="requestLabel" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 700; color: #0f172a;">
                             <span>📥</span>
-                            <span>Request JSON File</span>
+                            <span>Request JSON</span>
                             <span id="requestRequired" style="color: var(--error); font-size: 0.75rem;">*</span>
                         </label>
-                        <p id="requestInfo" style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.625rem; margin-top: 0;">Required for POST/PUT/PATCH/DELETE - Upload the JSON request body</p>
-                        <div class="file-upload" onclick="document.getElementById('requestFile').click()">
-                            <input type="file" id="requestFile" name="request_file" accept=".json" onchange="handleFileSelect(this, 'requestPreview')">
-                            <span style="font-size: 0.875rem;">📁</span>
-                            <p style="display: inline; margin: 0;">Click to upload or drag and drop</p>
-                            <span style="font-size: 0.6875rem; color: rgba(255, 255, 255, 0.8); margin-left: 0.25rem;">• JSON only</span>
+                        <p id="requestInfo" style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.75rem; margin-top: 0;">
+                            <span id="requestInfoText">Upload, paste, or drag & drop JSON request</span>
+                        </p>
+                        
+                        <!-- Upload and Paste Buttons -->
+                        <div class="json-upload-buttons" id="requestUploadButtons" style="display: none;">
+                            <button type="button" class="json-upload-btn active" onclick="switchJsonInputMethod('request', 'upload')" id="requestUploadBtn">
+                                <span>📁</span>
+                                <span>Upload or Drag Drop</span>
+                            </button>
+                            <button type="button" class="json-upload-btn" onclick="switchJsonInputMethod('request', 'paste')" id="requestPasteBtn">
+                                <span>📋</span>
+                                <span>Paste</span>
+                            </button>
                         </div>
+                        
+                        <!-- Upload or Drag Drop Method -->
+                        <div id="requestUpload" class="json-input-content">
+                            <div class="json-drag-drop-zone" 
+                                 onclick="document.getElementById('requestFile').click()"
+                                 ondrop="handleDrop(event, 'requestFile', 'requestPreview')" 
+                                 ondragover="handleDragOver(event)" 
+                                 ondragleave="handleDragLeave(event)">
+                                <input type="file" id="requestFile" name="request_file" accept=".json" onchange="handleFileSelect(this, 'requestPreview')" style="display: none;">
+                                <span>📁</span>
+                                <p>Click to upload or drag and drop</p>
+                                <span>• JSON only</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Paste Method -->
+                        <div id="requestPaste" class="json-input-content">
+                            <textarea id="requestPasteArea" class="json-paste-area" 
+                                      placeholder="Paste your JSON request here...&#10;&#10;Example:&#10;{&#10;  &quot;name&quot;: &quot;Example&quot;,&#10;  &quot;value&quot;: 123&#10;}"
+                                      onpaste="handlePaste(event, 'requestPasteArea', 'requestPreview')"
+                                      ondrop="handleTextDrop(event, 'requestPasteArea', 'requestPreview')"
+                                      ondragover="handleDragOver(event)"
+                                      ondragleave="handleDragLeave(event)"></textarea>
+                            <button type="button" class="sidebar-button" onclick="processPastedJson('requestPasteArea', 'requestPreview', 'requestFile')" style="margin-top: 0.5rem; width: 100%;">
+                                <span>✓</span>
+                                <span>Use Pasted JSON</span>
+                            </button>
+                        </div>
+                        
                         <div id="requestPreview" class="file-preview" style="display: none; margin-top: 0.75rem;"></div>
                     </div>
                 </div>
@@ -1973,7 +2547,7 @@
                                         <span style="font-size: 1rem;">📌</span> Tags
                                     </label>
                                     <label style="font-size: 0.875rem; font-weight: 600; color: #0f172a; margin-bottom: 0.5rem; display: block;">Tags <span style="color: #64748b; font-weight: 400;">(Optional)</span></label>
-                                    <input type="text" id="newOpTags" placeholder="pet, user" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.875rem;">
+                                    <input type="text" id="newOpTags" placeholder="pet" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.875rem;">
                                 </div>
                             </div>
                             
@@ -1993,29 +2567,101 @@
                             <div class="row" style="gap: 1.5rem;">
                                 <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
                                     <label style="font-size: 0.875rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="font-size: 1rem;">📥</span> Response JSON File
+                                        <span style="font-size: 1rem;">📥</span> Response JSON
                                     </label>
-                                    <p style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.625rem; margin-top: 0;">Upload the JSON response your API returns</p>
-                                    <div class="file-upload" onclick="document.getElementById('newOpResponse').click()">
-                                        <input type="file" id="newOpResponse" accept=".json" onchange="handleFileSelect(this, 'newOpResponsePreview')" style="display: none;">
-                                        <span style="font-size: 0.875rem;">📁</span>
-                                        <p style="display: inline; margin: 0;">Click to upload or drag and drop</p>
-                                        <span style="font-size: 0.6875rem; color: rgba(255, 255, 255, 0.8); margin-left: 0.25rem;">• JSON only</span>
+                                    <p style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.625rem; margin-top: 0;">Upload, paste, or drag & drop JSON response</p>
+                                    
+                                    <!-- Upload and Paste Buttons -->
+                                    <div class="json-upload-buttons">
+                                        <button type="button" class="json-upload-btn active" onclick="switchJsonInputMethod('newOpResponse', 'upload')" id="newOpResponseUploadBtn">
+                                            <span>📁</span>
+                                            <span>Upload or Drag Drop</span>
+                                        </button>
+                                        <button type="button" class="json-upload-btn" onclick="switchJsonInputMethod('newOpResponse', 'paste')" id="newOpResponsePasteBtn">
+                                            <span>📋</span>
+                                            <span>Paste</span>
+                                        </button>
                                     </div>
+                                    
+                                    <!-- Upload or Drag Drop Method -->
+                                    <div id="newOpResponseUpload" class="json-input-content">
+                                        <div class="json-drag-drop-zone" 
+                                             onclick="document.getElementById('newOpResponse').click()"
+                                             ondrop="handleDrop(event, 'newOpResponse', 'newOpResponsePreview')" 
+                                             ondragover="handleDragOver(event)" 
+                                             ondragleave="handleDragLeave(event)">
+                                            <input type="file" id="newOpResponse" accept=".json" onchange="handleFileSelect(this, 'newOpResponsePreview')" style="display: none;">
+                                            <span>📁</span>
+                                            <p>Click to upload or drag and drop</p>
+                                            <span>• JSON only</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Paste Method -->
+                                    <div id="newOpResponsePaste" class="json-input-content">
+                                        <textarea id="newOpResponsePasteArea" class="json-paste-area" 
+                                                  placeholder="Paste your JSON response here..."
+                                                  onpaste="handlePaste(event, 'newOpResponsePasteArea', 'newOpResponsePreview')"
+                                                  ondrop="handleTextDrop(event, 'newOpResponsePasteArea', 'newOpResponsePreview')"
+                                                  ondragover="handleDragOver(event)"
+                                                  ondragleave="handleDragLeave(event)"></textarea>
+                                        <button type="button" class="sidebar-button" onclick="processPastedJson('newOpResponsePasteArea', 'newOpResponsePreview', 'newOpResponse')" style="margin-top: 0.5rem; width: 100%;">
+                                            <span>✓</span>
+                                            <span>Use Pasted JSON</span>
+                                        </button>
+                                    </div>
+                                    
                                     <div id="newOpResponsePreview" class="file-preview" style="display: none; margin-top: 0.75rem;"></div>
                                 </div>
                                 
                                 <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
                                     <label id="newOpRequestLabel" style="font-size: 0.875rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="font-size: 1rem;">📥</span> Request JSON File
+                                        <span style="font-size: 1rem;">📥</span> Request JSON
                                     </label>
-                                    <p id="newOpRequestInfo" style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.625rem; margin-top: 0;">Required for POST/PUT/PATCH/DELETE - Upload the JSON request body</p>
-                                    <div class="file-upload" onclick="document.getElementById('newOpRequest').click()">
-                                        <input type="file" id="newOpRequest" accept=".json" onchange="handleFileSelect(this, 'newOpRequestPreview')" style="display: none;">
-                                        <span style="font-size: 0.875rem;">📁</span>
-                                        <p style="display: inline; margin: 0;">Click to upload or drag and drop</p>
-                                        <span style="font-size: 0.6875rem; color: rgba(255, 255, 255, 0.8); margin-left: 0.25rem;">• JSON only</span>
+                                    <p id="newOpRequestInfo" style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.75rem; margin-top: 0;">
+                                        <span id="newOpRequestInfoText">Upload, paste, or drag & drop JSON request</span>
+                                    </p>
+                                    
+                                    <!-- Upload and Paste Buttons -->
+                                    <div class="json-upload-buttons" id="newOpRequestUploadButtons">
+                                        <button type="button" class="json-upload-btn active" onclick="switchJsonInputMethod('newOpRequest', 'upload')" id="newOpRequestUploadBtn">
+                                            <span>📁</span>
+                                            <span>Upload or Drag Drop</span>
+                                        </button>
+                                        <button type="button" class="json-upload-btn" onclick="switchJsonInputMethod('newOpRequest', 'paste')" id="newOpRequestPasteBtn">
+                                            <span>📋</span>
+                                            <span>Paste</span>
+                                        </button>
                                     </div>
+                                    
+                                    <!-- Upload or Drag Drop Method -->
+                                    <div id="newOpRequestUpload" class="json-input-content">
+                                        <div class="json-drag-drop-zone" 
+                                             onclick="document.getElementById('newOpRequest').click()"
+                                             ondrop="handleDrop(event, 'newOpRequest', 'newOpRequestPreview')" 
+                                             ondragover="handleDragOver(event)" 
+                                             ondragleave="handleDragLeave(event)">
+                                            <input type="file" id="newOpRequest" accept=".json" onchange="handleFileSelect(this, 'newOpRequestPreview')" style="display: none;">
+                                            <span>📁</span>
+                                            <p>Click to upload or drag and drop</p>
+                                            <span>• JSON only</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Paste Method -->
+                                    <div id="newOpRequestPaste" class="json-input-content">
+                                        <textarea id="newOpRequestPasteArea" class="json-paste-area" 
+                                                  placeholder="Paste your JSON request here..."
+                                                  onpaste="handlePaste(event, 'newOpRequestPasteArea', 'newOpRequestPreview')"
+                                                  ondrop="handleTextDrop(event, 'newOpRequestPasteArea', 'newOpRequestPreview')"
+                                                  ondragover="handleDragOver(event)"
+                                                  ondragleave="handleDragLeave(event)"></textarea>
+                                        <button type="button" class="sidebar-button" onclick="processPastedJson('newOpRequestPasteArea', 'newOpRequestPreview', 'newOpRequest')" style="margin-top: 0.5rem; width: 100%;">
+                                            <span>✓</span>
+                                            <span>Use Pasted JSON</span>
+                                        </button>
+                                    </div>
+                                    
                                     <div id="newOpRequestPreview" class="file-preview" style="display: none; margin-top: 0.75rem;"></div>
                                 </div>
                             </div>
@@ -2133,6 +2779,64 @@
                 }
             }
         }
+        
+        // Theme Toggle Functionality
+        function toggleTheme() {
+            const body = document.body;
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+            
+            if (body.classList.contains('light-mode')) {
+                // Switch to dark mode
+                body.classList.remove('light-mode');
+                if (sunIcon) {
+                    sunIcon.style.display = 'none';
+                }
+                if (moonIcon) {
+                    moonIcon.style.display = 'block';
+                }
+                localStorage.setItem('theme', 'dark');
+            } else {
+                // Switch to light mode
+                body.classList.add('light-mode');
+                if (sunIcon) {
+                    sunIcon.style.display = 'block';
+                }
+                if (moonIcon) {
+                    moonIcon.style.display = 'none';
+                }
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Initialize theme on page load
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+            
+            if (savedTheme === 'light') {
+                body.classList.add('light-mode');
+                if (sunIcon) {
+                    sunIcon.style.display = 'block';
+                }
+                if (moonIcon) {
+                    moonIcon.style.display = 'none';
+                }
+            } else {
+                body.classList.remove('light-mode');
+                if (sunIcon) {
+                    sunIcon.style.display = 'none';
+                }
+                if (moonIcon) {
+                    moonIcon.style.display = 'block';
+                }
+            }
+        }
+        
+        // Initialize theme when page loads
+        document.addEventListener('DOMContentLoaded', initializeTheme);
         
         // Success notification toast function
         function showSuccessNotification(message) {
@@ -2323,33 +3027,260 @@
             const label = document.getElementById('newOpRequestLabel');
             const info = document.getElementById('newOpRequestInfo');
             const fileInput = document.getElementById('newOpRequest');
+            const uploadButtons = document.getElementById('newOpRequestUploadButtons');
+            const uploadDiv = document.getElementById('newOpRequestUpload');
+            const pasteDiv = document.getElementById('newOpRequestPaste');
+            const previewDiv = document.getElementById('newOpRequestPreview');
+            
             if (method === 'GET') {
-                label.innerHTML = '<span style="font-size: 1rem;">📥</span> Request JSON File';
+                // For GET, show info box with message
                 if (info) {
-                    info.innerHTML = '<strong style="color: #1e40af;">ℹ️ GET requests don\'t require a request body</strong>';
-                    info.style.background = '#dbeafe';
-                    info.style.borderLeftColor = '#3b82f6';
-                    info.style.color = '#475569';
-                    info.style.fontSize = '0.8125rem';
-                    info.style.marginBottom = '0.75rem';
-                    info.style.padding = '0.5rem 0.75rem';
-                    info.style.borderRadius = '4px';
+                    info.innerHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; border-radius: 4px;"><span style="font-size: 1rem;">ℹ️</span><span>GET requests don\'t require a request body</span></div>';
                 }
-                fileInput.required = false;
+                if (label) {
+                    const asterisk = label.querySelector('span[style*="color: var(--error)"]');
+                    if (asterisk) asterisk.style.display = 'none';
+                }
+                if (uploadButtons) uploadButtons.style.display = 'none';
+                if (uploadDiv) uploadDiv.classList.remove('active');
+                if (pasteDiv) pasteDiv.classList.remove('active');
+                if (previewDiv) previewDiv.style.display = 'none';
+                if (fileInput) fileInput.required = false;
+                // Clear request file input
+                if (fileInput) fileInput.value = '';
+                const requestPasteArea = document.getElementById('newOpRequestPasteArea');
+                if (requestPasteArea) requestPasteArea.value = '';
             } else {
-                label.innerHTML = '<span style="font-size: 1rem;">📥</span> Request JSON File';
+                // For POST/PUT/PATCH/DELETE, show simple text like Response JSON
                 if (info) {
-                    info.innerHTML = `<strong style="color: #1e40af;">Required for ${method}</strong> - Upload the JSON request body`;
-                    info.style.background = '#dbeafe';
-                    info.style.borderLeftColor = '#3b82f6';
-                    info.style.color = '#475569';
-                    info.style.fontSize = '0.8125rem';
-                    info.style.marginBottom = '0.75rem';
-                    info.style.padding = '0.5rem 0.75rem';
-                    info.style.borderRadius = '4px';
+                    info.innerHTML = '<span>Upload, paste, or drag & drop JSON request</span>';
                 }
-                fileInput.required = true;
+                if (label) {
+                    const asterisk = label.querySelector('span[style*="color: var(--error)"]');
+                    if (asterisk) asterisk.style.display = 'inline';
+                }
+                if (uploadButtons) uploadButtons.style.display = 'flex';
+                // Don't automatically show upload area - user must click the button
+                // Ensure paste div is not active
+                if (pasteDiv) {
+                    pasteDiv.classList.remove('active');
+                }
+                if (fileInput) fileInput.required = true;
             }
+        }
+        
+        // Switch between input methods (Upload or Drag Drop, Paste)
+        function switchJsonInputMethod(fieldPrefix, method) {
+            // Hide all content areas
+            const uploadDiv = document.getElementById(fieldPrefix + 'Upload');
+            const pasteDiv = document.getElementById(fieldPrefix + 'Paste');
+            
+            // Handle button classes for response, request, and multi-operation fields
+            if (fieldPrefix === 'response') {
+                const uploadBtn = document.getElementById('responseUploadBtn');
+                const pasteBtn = document.getElementById('responsePasteBtn');
+                if (uploadBtn) uploadBtn.classList.remove('active');
+                if (pasteBtn) pasteBtn.classList.remove('active');
+            } else if (fieldPrefix === 'request') {
+                const uploadBtn = document.getElementById('requestUploadBtn');
+                const pasteBtn = document.getElementById('requestPasteBtn');
+                if (uploadBtn) uploadBtn.classList.remove('active');
+                if (pasteBtn) pasteBtn.classList.remove('active');
+            } else if (fieldPrefix === 'newOpResponse') {
+                const uploadBtn = document.getElementById('newOpResponseUploadBtn');
+                const pasteBtn = document.getElementById('newOpResponsePasteBtn');
+                if (uploadBtn) uploadBtn.classList.remove('active');
+                if (pasteBtn) pasteBtn.classList.remove('active');
+            } else if (fieldPrefix === 'newOpRequest') {
+                const uploadBtn = document.getElementById('newOpRequestUploadBtn');
+                const pasteBtn = document.getElementById('newOpRequestPasteBtn');
+                if (uploadBtn) uploadBtn.classList.remove('active');
+                if (pasteBtn) pasteBtn.classList.remove('active');
+            }
+            
+            // Hide all content (use CSS classes, not inline styles)
+            if (uploadDiv) {
+                uploadDiv.classList.remove('active');
+            }
+            if (pasteDiv) {
+                pasteDiv.classList.remove('active');
+            }
+            
+            // Show selected method
+            if (method === 'upload' && uploadDiv) {
+                uploadDiv.classList.add('active');
+                if (fieldPrefix === 'response') {
+                    const uploadBtn = document.getElementById('responseUploadBtn');
+                    if (uploadBtn) uploadBtn.classList.add('active');
+                } else if (fieldPrefix === 'request') {
+                    const uploadBtn = document.getElementById('requestUploadBtn');
+                    if (uploadBtn) uploadBtn.classList.add('active');
+                } else if (fieldPrefix === 'newOpResponse') {
+                    const uploadBtn = document.getElementById('newOpResponseUploadBtn');
+                    if (uploadBtn) uploadBtn.classList.add('active');
+                } else if (fieldPrefix === 'newOpRequest') {
+                    const uploadBtn = document.getElementById('newOpRequestUploadBtn');
+                    if (uploadBtn) uploadBtn.classList.add('active');
+                }
+            } else if (method === 'paste' && pasteDiv) {
+                pasteDiv.classList.add('active');
+                if (fieldPrefix === 'response') {
+                    const pasteBtn = document.getElementById('responsePasteBtn');
+                    if (pasteBtn) pasteBtn.classList.add('active');
+                } else if (fieldPrefix === 'request') {
+                    const pasteBtn = document.getElementById('requestPasteBtn');
+                    if (pasteBtn) pasteBtn.classList.add('active');
+                } else if (fieldPrefix === 'newOpResponse') {
+                    const pasteBtn = document.getElementById('newOpResponsePasteBtn');
+                    if (pasteBtn) pasteBtn.classList.add('active');
+                } else if (fieldPrefix === 'newOpRequest') {
+                    const pasteBtn = document.getElementById('newOpRequestPasteBtn');
+                    if (pasteBtn) pasteBtn.classList.add('active');
+                }
+            }
+        }
+        
+        // Handle drag and drop for files
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.currentTarget.classList) {
+                e.currentTarget.classList.add('drag-active');
+            }
+            // Also handle json-drag-drop-zone class
+            if (e.currentTarget.classList && e.currentTarget.classList.contains('json-drag-drop-zone')) {
+                e.currentTarget.classList.add('drag-active');
+            }
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.currentTarget.classList) {
+                e.currentTarget.classList.remove('drag-active');
+            }
+            // Also handle json-drag-drop-zone class
+            if (e.currentTarget.classList && e.currentTarget.classList.contains('json-drag-drop-zone')) {
+                e.currentTarget.classList.remove('drag-active');
+            }
+        }
+        
+        function handleDrop(e, fileInputId, previewId) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.currentTarget.classList) {
+                e.currentTarget.classList.remove('drag-active');
+            }
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/json' || file.name.endsWith('.json')) {
+                    const input = document.getElementById(fileInputId);
+                    if (input) {
+                        // Create a new FileList with the dropped file
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        input.files = dataTransfer.files;
+                        handleFileSelect(input, previewId);
+                    }
+                } else {
+                    alert('Please drop a JSON file');
+                }
+            }
+        }
+        
+        // Handle paste event
+        function handlePaste(e, textareaId, previewId) {
+            // Let the paste happen first, then process
+            setTimeout(() => {
+                const textarea = document.getElementById(textareaId);
+                if (textarea && textarea.value.trim()) {
+                    // Auto-process on paste
+                    processPastedJson(textareaId, previewId, textareaId.replace('PasteArea', 'File'));
+                }
+            }, 100);
+        }
+        
+        // Handle text drop (when dropping text into textarea)
+        function handleTextDrop(e, textareaId, previewId) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const text = e.dataTransfer.getData('text/plain');
+            if (text) {
+                const textarea = document.getElementById(textareaId);
+                if (textarea) {
+                    textarea.value = text;
+                    const fileInputId = textareaId.replace('PasteArea', 'File');
+                    processPastedJson(textareaId, previewId, fileInputId);
+                }
+            }
+        }
+        
+        // Process pasted JSON
+        function processPastedJson(textareaId, previewId, fileInputId) {
+            const textarea = document.getElementById(textareaId);
+            const preview = document.getElementById(previewId);
+            
+            if (!textarea || !preview) return;
+            
+            const jsonText = textarea.value.trim();
+            if (!jsonText) {
+                alert('Please paste some JSON content');
+                return;
+            }
+            
+            try {
+                const json = JSON.parse(jsonText);
+                preview.style.display = 'block';
+                preview.innerHTML = `<p><strong>✅ Pasted JSON</strong></p><pre>${JSON.stringify(json, null, 2)}</pre>`;
+                
+                // Create a blob and assign to file input
+                const fileInput = document.getElementById(fileInputId);
+                if (fileInput) {
+                    const blob = new Blob([jsonText], { type: 'application/json' });
+                    const file = new File([blob], 'pasted.json', { type: 'application/json' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
+                }
+            } catch (err) {
+                alert('Invalid JSON: ' + err.message);
+                preview.style.display = 'none';
+            }
+        }
+        
+        // Helper function to get JSON from file input or paste area
+        function getJsonFromInput(fileInputId, pasteAreaId) {
+            return new Promise((resolve, reject) => {
+                const fileInput = document.getElementById(fileInputId);
+                const pasteArea = pasteAreaId ? document.getElementById(pasteAreaId) : null;
+                
+                // Check if file input has a file
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            resolve(JSON.parse(e.target.result));
+                        } catch (err) {
+                            reject(new Error('Invalid JSON file: ' + err.message));
+                        }
+                    };
+                    reader.readAsText(file);
+                } 
+                // Check if paste area has content
+                else if (pasteArea && pasteArea.value.trim()) {
+                    try {
+                        resolve(JSON.parse(pasteArea.value.trim()));
+                    } catch (err) {
+                        reject(new Error('Invalid JSON in paste area: ' + err.message));
+                    }
+                } else {
+                    reject(new Error('No JSON input provided'));
+                }
+            });
         }
         
         function handleFileSelect(input, previewId) {
@@ -2371,42 +3302,36 @@
             }
         }
         
-        function addOperation() {
+        async function addOperation() {
             const method = document.getElementById('newOpMethod').value;
             const path = document.getElementById('newOpPath').value;
             const opId = document.getElementById('newOpId').value;
             const summary = document.getElementById('newOpSummary').value;
             const desc = document.getElementById('newOpDesc').value;
             const tags = document.getElementById('newOpTags').value;
-            const responseFile = document.getElementById('newOpResponse').files[0];
-            const requestFile = document.getElementById('newOpRequest').files[0];
+            // Get JSON from file input or paste area
+            let responseJson = null;
+            let requestJson = null;
             
-            if (!path || !opId || !responseFile) {
-                alert('Please fill in all required fields: Path, Operation ID, and Response JSON');
+            try {
+                // Try to get response JSON from file or paste area
+                responseJson = await getJsonFromInput('newOpResponse', 'newOpResponsePasteArea');
+            } catch (err) {
+                alert('Response JSON is required: ' + err.message);
                 return;
             }
             
-            if (method !== 'GET' && !requestFile) {
-                alert(`${method} operations require a Request JSON file`);
-                return;
-            }
-            
-            // Read files
-            const responseReader = new FileReader();
-            responseReader.onload = function() {
-                let requestData = null;
-                if (requestFile) {
-                    const requestReader = new FileReader();
-                    requestReader.onload = function() {
-                        requestData = JSON.parse(requestReader.result);
-                        addOperationToList(method, path, opId, summary, desc, tags, JSON.parse(responseReader.result), requestData);
-                    };
-                    requestReader.readAsText(requestFile);
-                } else {
-                    addOperationToList(method, path, opId, summary, desc, tags, JSON.parse(responseReader.result), null);
+            if (method !== 'GET') {
+                try {
+                    // Try to get request JSON from file or paste area
+                    requestJson = await getJsonFromInput('newOpRequest', 'newOpRequestPasteArea');
+                } catch (err) {
+                    alert(`${method} operations require Request JSON: ` + err.message);
+                    return;
                 }
-            };
-            responseReader.readAsText(responseFile);
+            }
+            
+            addOperationToList(method, path, opId, summary, desc, tags, responseJson, requestJson);
         }
         
         function addOperationToList(method, path, opId, summary, desc, tags, responseJson, requestJson) {
@@ -2422,6 +3347,26 @@
             };
             operations.push(op);
             renderOperationsList();
+            
+            // Show success message
+            try {
+                showOperationAddedSuccess(method, path, opId, operations.length);
+            } catch (error) {
+                console.error('Error showing success notification:', error);
+                // Fallback to simple alert if notification fails
+                alert(`✅ Operation "${opId}" (${method} ${path}) added successfully!\n\nTotal Operations: ${operations.length}\n\nYou can continue adding more operations.`);
+            }
+            
+            // Scroll to operations list to make it visible
+            setTimeout(() => {
+                const operationsList = document.getElementById('operationsList');
+                if (operationsList) {
+                    operationsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Ensure it's visible
+                    operationsList.style.display = 'block';
+                }
+            }, 100);
+            
             // Clear form
             document.getElementById('newOpPath').value = '';
             document.getElementById('newOpId').value = '';
@@ -2434,37 +3379,144 @@
             document.getElementById('newOpRequestPreview').style.display = 'none';
         }
         
+        function showOperationAddedSuccess(method, path, opId, totalOperations) {
+            console.log('Showing success notification for operation:', {method, path, opId, totalOperations});
+            
+            // Remove existing notification if any
+            const existing = document.getElementById('operationAddedNotification');
+            if (existing) {
+                existing.remove();
+            }
+            
+            // Add animation keyframes if not already present
+            if (!document.getElementById('operationNotificationStyles')) {
+                const style = document.createElement('style');
+                style.id = 'operationNotificationStyles';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOutRight {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Create success notification element
+            const notification = document.createElement('div');
+            notification.id = 'operationAddedNotification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+                z-index: 10000;
+                max-width: 400px;
+                animation: slideInRight 0.3s ease-out;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <div style="font-size: 1.5rem; line-height: 1;">✅</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem;">Operation Added Successfully!</div>
+                        <div style="font-size: 0.875rem; opacity: 0.95; line-height: 1.4;">
+                            <strong>${method}</strong> ${path}<br>
+                            <span style="opacity: 0.9;">Operation ID: <code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-size: 0.8125rem;">${opId}</code></span>
+                        </div>
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.8125rem; opacity: 0.9;">
+                            📊 Total Operations: <strong>${totalOperations}</strong><br>
+                            <span style="font-size: 0.75rem; margin-top: 0.25rem; display: block;">You can continue adding more operations.</span>
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 1rem; line-height: 1; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">×</button>
+                </div>
+            `;
+            
+            // Add to page
+            try {
+                document.body.appendChild(notification);
+                console.log('Success notification added to page');
+            } catch (error) {
+                console.error('Error adding notification to page:', error);
+                // Fallback: show alert
+                alert(`✅ Operation "${opId}" (${method} ${path}) added successfully!\n\nTotal Operations: ${totalOperations}\n\nYou can continue adding more operations.`);
+                return;
+            }
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (notification && notification.parentElement) {
+                    notification.style.animation = 'slideOutRight 0.3s ease-out';
+                    setTimeout(() => {
+                        if (notification && notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+        
         function renderOperationsList() {
             const list = document.getElementById('operationsList');
             
             if (operations.length === 0) {
-                if (list) list.innerHTML = '';
+                if (list) {
+                    list.innerHTML = '';
+                    list.style.display = 'none';
+                }
                 return;
             }
             
-            let html = `<hr><h3>📊 Added Operations (${operations.length})</h3>`;
+            // Ensure list is visible
+            if (list) {
+                list.style.display = 'block';
+            }
+            
+            let html = `<hr style="margin: 2rem 0; border-top: 2px solid #e2e8f0;"><h3 style="margin-bottom: 1.5rem; color: #0f172a; font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">📊 Added Operations (${operations.length})</h3>`;
             operations.forEach((op, idx) => {
                 html += `
-                    <div class="operation-item">
-                        <div class="operation-item-header">
-                            <strong>🔹 ${op.method} ${op.path} - ${op.operation_id}</strong>
+                    <div class="operation-item" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div class="operation-item-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #0f172a; font-size: 1rem; font-weight: 600;">🔹 ${op.method} ${op.path} - ${op.operation_id}</strong>
                             <button type="button" onclick="removeOperation(${idx})" class="btn-secondary" style="width: auto; margin: 0; padding: 5px 15px;">🗑️ Remove</button>
                         </div>
-                        <div class="operation-item-details">
-                            <p><strong>Method:</strong> <code>${op.method}</code></p>
-                            <p><strong>Path:</strong> <code>${op.path}</code></p>
-                            <p><strong>Operation ID:</strong> <code>${op.operation_id}</code></p>
-                            ${op.summary ? `<p><strong>Summary:</strong> ${op.summary}</p>` : ''}
-                            ${op.description ? `<p><strong>Description:</strong> ${op.description}</p>` : ''}
-                            ${op.tags.length > 0 ? `<p><strong>Tags:</strong> ${op.tags.join(', ')}</p>` : ''}
+                        <div class="operation-item-details" style="display: grid; gap: 0.5rem; color: #334155;">
+                            <p style="margin: 0; color: #334155;"><strong style="color: #0f172a;">Method:</strong> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a; font-weight: 500;">${op.method}</code></p>
+                            <p style="margin: 0; color: #334155;"><strong style="color: #0f172a;">Path:</strong> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a; font-weight: 500;">${op.path}</code></p>
+                            <p style="margin: 0; color: #334155;"><strong style="color: #0f172a;">Operation ID:</strong> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a; font-weight: 500;">${op.operation_id}</code></p>
+                            ${op.summary ? `<p style="margin: 0; color: #334155;"><strong style="color: #0f172a;">Summary:</strong> ${op.summary}</p>` : ''}
+                            ${op.description ? `<p style="margin: 0; color: #334155;"><strong style="color: #0f172a;">Description:</strong> ${op.description}</p>` : ''}
+                            ${op.tags.length > 0 ? `<p style="margin: 0; color: #334155;"><strong style="color: #0f172a;">Tags:</strong> ${op.tags.join(', ')}</p>` : ''}
                         </div>
                     </div>
                 `;
             });
-            html += `<button type="button" onclick="clearAllOperations()" class="btn-secondary">🗑️ Clear All Operations</button>`;
+            html += `<button type="button" onclick="clearAllOperations()" class="btn-secondary" style="margin-top: 1rem;">🗑️ Clear All Operations</button>`;
             
-            if (list) list.innerHTML = html;
-            if (list2) list2.innerHTML = html;
+            if (list) {
+                list.innerHTML = html;
+            }
         }
         
         function removeOperation(idx) {
@@ -2482,36 +3534,31 @@
         document.getElementById('singleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            const responseFile = document.getElementById('responseFile').files[0];
-            const requestFile = document.getElementById('requestFile').files[0];
             
-            if (!responseFile) {
-                alert('Response JSON file is required');
+            // Get JSON from file input or paste area
+            let responseJson = null;
+            let requestJson = null;
+            
+            try {
+                // Try to get response JSON from file or paste area
+                responseJson = await getJsonFromInput('responseFile', 'responsePasteArea');
+            } catch (err) {
+                alert('Response JSON is required: ' + err.message);
                 return;
             }
             
             const method = formData.get('method');
-            if (method !== 'GET' && !requestFile) {
-                alert(`${method} operations require a Request JSON file`);
-                return;
+            if (method !== 'GET') {
+                try {
+                    // Try to get request JSON from file or paste area
+                    requestJson = await getJsonFromInput('requestFile', 'requestPasteArea');
+                } catch (err) {
+                    alert(`${method} operations require Request JSON: ` + err.message);
+                    return;
+                }
             }
             
-            // Read files
-            const responseReader = new FileReader();
-            responseReader.onload = async function() {
-                let requestData = null;
-                if (requestFile) {
-                    const requestReader = new FileReader();
-                    requestReader.onload = async function() {
-                        requestData = JSON.parse(requestReader.result);
-                        await submitSingleOperation(JSON.parse(responseReader.result), requestData, formData);
-                    };
-                    requestReader.readAsText(requestFile);
-                } else {
-                    await submitSingleOperation(JSON.parse(responseReader.result), null, formData);
-                }
-            };
-            responseReader.readAsText(responseFile);
+            await submitSingleOperation(responseJson, requestJson, formData);
         });
         
         async function submitSingleOperation(responseJson, requestJson, formData) {
@@ -2577,15 +3624,25 @@
                         <!-- Preview Section (Compact, Below Header) -->
                         <div style="padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg-secondary);">
                             <div class="expander" style="margin: 0;">
-                                <div class="expander-header" onclick="toggleExpander(this.parentElement)" style="padding: 0.5rem 0; background: transparent !important; border: none; cursor: pointer; display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: space-between; align-items: center;">
-                                    <div style="display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 0.5rem;">
-                                        <span style="font-size: 1rem; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">👀</span>
-                                        <span style="color: var(--text-tertiary) !important; font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Preview</span>
+                                <div class="expander-header" style="padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: space-between; align-items: center; transition: all 0.2s ease;">
+                                    <div style="display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 0.625rem; cursor: pointer;" onclick="toggleExpander(this.parentElement)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; opacity: 0.8;">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor" fill-opacity="0.7"/>
+                                        </svg>
+                                        <span style="color: var(--text-primary) !important; font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Preview</span>
                                     </div>
-                                    <span class="expander-arrow" style="color: var(--text-tertiary); font-size: 0.875rem; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">▼</span>
+                                    <div style="display: flex !important; align-items: center; gap: 0.75rem;">
+                                        <button onclick="copyYAMLToClipboard(); event.stopPropagation();" class="copy-yaml-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; border-radius: 6px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05); position: relative; overflow: hidden;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(99, 102, 241, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(99, 102, 241, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)';" title="Copy YAML to clipboard">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; opacity: 0.95;">
+                                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" fill="currentColor"/>
+                                            </svg>
+                                            <span style="font-weight: 500; letter-spacing: 0.3px;">Copy</span>
+                                        </button>
+                                        <span class="expander-arrow" style="color: var(--text-tertiary); font-size: 0.875rem; display: inline-block !important; visibility: visible !important; opacity: 0.7 !important; cursor: pointer; transition: transform 0.2s ease;" onclick="toggleExpander(this.closest('.expander'))">▼</span>
+                                    </div>
                                 </div>
                                 <div class="expander-content" style="display: none; margin-top: 0.75rem; overflow: visible;">
-                                    <div style="background: #1e1e1e; border-radius: var(--radius-sm); overflow-y: auto; overflow-x: hidden; max-height: 400px; padding: 0;">
+                                    <div style="background: #1e1e1e; border-radius: var(--radius-sm); overflow-y: auto; overflow-x: hidden; max-height: 400px; padding: 0; position: relative;">
                                         <pre style="margin: 0; padding: 1rem; color: #d4d4d4; font-size: 0.8125rem; line-height: 1.5; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; background: transparent !important; overflow: visible !important; max-height: none !important;">${escapedYaml}</pre>
                                     </div>
                                 </div>
@@ -2600,7 +3657,8 @@
                             <div id="mock-server-status-single" style="margin-top: 1rem;"></div>
                         </div>
                     `;
-                    // Store file path in a data attribute for safer access
+                    // Store file path globally and in data attribute
+                    lastGeneratedFilePath = filePath;
                     resultDiv.setAttribute('data-file-path', filePath);
                     
                     // Auto-scroll to result section with smooth animation
@@ -2709,15 +3767,25 @@
                         <!-- Preview Section (Compact, Below Header) -->
                         <div style="padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg-secondary);">
                             <div class="expander" style="margin: 0;">
-                                <div class="expander-header" onclick="toggleExpander(this.parentElement)" style="padding: 0.5rem 0; background: transparent !important; border: none; cursor: pointer; display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: space-between; align-items: center;">
-                                    <div style="display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 0.5rem;">
-                                        <span style="font-size: 1rem; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">👀</span>
-                                        <span style="color: var(--text-tertiary) !important; font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Preview</span>
+                                <div class="expander-header" style="padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: space-between; align-items: center; transition: all 0.2s ease;">
+                                    <div style="display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 0.625rem; cursor: pointer;" onclick="toggleExpander(this.parentElement)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; opacity: 0.8;">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor" fill-opacity="0.7"/>
+                                        </svg>
+                                        <span style="color: var(--text-primary) !important; font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">Preview</span>
                                     </div>
-                                    <span class="expander-arrow" style="color: var(--text-tertiary); font-size: 0.875rem; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">▼</span>
+                                    <div style="display: flex !important; align-items: center; gap: 0.75rem;">
+                                        <button onclick="copyYAMLToClipboard(); event.stopPropagation();" class="copy-yaml-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; border-radius: 6px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05); position: relative; overflow: hidden;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(99, 102, 241, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(99, 102, 241, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05)';" title="Copy YAML to clipboard">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; opacity: 0.95;">
+                                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" fill="currentColor"/>
+                                            </svg>
+                                            <span style="font-weight: 500; letter-spacing: 0.3px;">Copy</span>
+                                        </button>
+                                        <span class="expander-arrow" style="color: var(--text-tertiary); font-size: 0.875rem; display: inline-block !important; visibility: visible !important; opacity: 0.7 !important; cursor: pointer; transition: transform 0.2s ease;" onclick="toggleExpander(this.closest('.expander'))">▼</span>
+                                    </div>
                                 </div>
                                 <div class="expander-content" style="display: none; margin-top: 0.75rem; overflow: visible;">
-                                    <div style="background: #1e1e1e; border-radius: var(--radius-sm); overflow-y: auto; overflow-x: hidden; max-height: 400px; padding: 0;">
+                                    <div style="background: #1e1e1e; border-radius: var(--radius-sm); overflow-y: auto; overflow-x: hidden; max-height: 400px; padding: 0; position: relative;">
                                         <pre style="margin: 0; padding: 1rem; color: #d4d4d4; font-size: 0.8125rem; line-height: 1.5; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; background: transparent !important; overflow: visible !important; max-height: none !important;">${escapedYaml}</pre>
                                     </div>
                                 </div>
@@ -3267,19 +4335,145 @@
             }
         }
         
+        // Copy YAML to clipboard function
+        function copyYAMLToClipboard() {
+            if (!lastGeneratedYAML) {
+                alert('No YAML content available to copy');
+                return;
+            }
+            
+            // Use modern Clipboard API if available
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(lastGeneratedYAML).then(() => {
+                    showSuccessNotification('YAML copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    // Fallback to older method
+                    fallbackCopyToClipboard(lastGeneratedYAML);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopyToClipboard(lastGeneratedYAML);
+            }
+        }
+        
+        // Fallback copy method for older browsers
+        function fallbackCopyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showSuccessNotification('YAML copied to clipboard!');
+                } else {
+                    alert('Failed to copy YAML. Please select and copy manually.');
+                }
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                alert('Failed to copy YAML. Please select and copy manually.');
+            } finally {
+                document.body.removeChild(textArea);
+            }
+        }
+        
         // Update request file requirement based on method
         document.getElementById('singleForm').querySelector('select[name="method"]').addEventListener('change', function() {
             const method = this.value;
             const requestInfo = document.getElementById('requestInfo');
+            const requestRequired = document.getElementById('requestRequired');
+            const requestUploadButtons = document.getElementById('requestUploadButtons');
+            const requestUpload = document.getElementById('requestUpload');
+            const requestPaste = document.getElementById('requestPaste');
+            const requestPreview = document.getElementById('requestPreview');
             if (method === 'GET') {
-                requestInfo.innerHTML = '<strong style="color: #0f172a;">ℹ️ GET requests don\'t require a request body</strong>';
+                // For GET, show info box with message
+                if (requestInfo) {
+                    requestInfo.innerHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; border-radius: 4px;"><span style="font-size: 1rem;">ℹ️</span><span>GET requests don\'t require a request body</span></div>';
+                }
+                if (requestRequired) requestRequired.style.display = 'none';
+                if (requestUploadButtons) requestUploadButtons.style.display = 'none';
+                if (requestUpload) {
+                    requestUpload.classList.remove('active');
+                }
+                if (requestPaste) {
+                    requestPaste.classList.remove('active');
+                }
+                if (requestPreview) requestPreview.style.display = 'none';
+                // Clear request file input
+                const requestFileInput = document.getElementById('requestFile');
+                if (requestFileInput) requestFileInput.value = '';
+                const requestPasteArea = document.getElementById('requestPasteArea');
+                if (requestPasteArea) requestPasteArea.value = '';
             } else {
-                requestInfo.innerHTML = `<strong style="color: #0f172a;">Required for ${method}</strong> - Upload the JSON request body`;
+                // For POST/PUT/PATCH/DELETE, show simple text like Response JSON
+                if (requestInfo) {
+                    requestInfo.innerHTML = '<span>Upload, paste, or drag & drop JSON request</span>';
+                }
+                if (requestRequired) requestRequired.style.display = 'inline';
+                if (requestUploadButtons) requestUploadButtons.style.display = 'flex';
+                // Don't automatically show upload area - user must click the button
+                // Ensure requestPaste is not active
+                if (requestPaste) {
+                    requestPaste.classList.remove('active');
+                }
             }
-            requestInfo.style.color = '#475569';
-            requestInfo.style.fontSize = '0.875rem';
-            requestInfo.style.marginBottom = '0.75rem';
         });
+        
+        // Initialize request field visibility on page load
+        function initializeRequestFieldVisibility() {
+            const methodSelect = document.getElementById('singleForm')?.querySelector('select[name="method"]');
+            if (methodSelect) {
+                const method = methodSelect.value;
+                const requestInfo = document.getElementById('requestInfo');
+                const requestRequired = document.getElementById('requestRequired');
+                const requestUploadButtons = document.getElementById('requestUploadButtons');
+                const requestUpload = document.getElementById('requestUpload');
+                const requestPaste = document.getElementById('requestPaste');
+                const requestPreview = document.getElementById('requestPreview');
+                
+                if (method === 'GET') {
+                    // For GET, show info box with message
+                    if (requestInfo) {
+                        requestInfo.innerHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; border-radius: 4px;"><span style="font-size: 1rem;">ℹ️</span><span>GET requests don\'t require a request body</span></div>';
+                    }
+                    if (requestRequired) requestRequired.style.display = 'none';
+                    if (requestUploadButtons) requestUploadButtons.style.display = 'none';
+                    if (requestUpload) {
+                        requestUpload.classList.remove('active');
+                    }
+                    if (requestPaste) {
+                        requestPaste.classList.remove('active');
+                    }
+                    if (requestPreview) requestPreview.style.display = 'none';
+                } else {
+                    // For POST/PUT/PATCH/DELETE, show simple text like Response JSON
+                    if (requestInfo) {
+                        requestInfo.innerHTML = '<span>Upload, paste, or drag & drop JSON request</span>';
+                    }
+                    if (requestRequired) requestRequired.style.display = 'inline';
+                    if (requestUploadButtons) requestUploadButtons.style.display = 'flex';
+                    // Don't automatically show upload area - user must click the button
+                    // Ensure requestPaste is not active
+                    if (requestPaste) {
+                        requestPaste.classList.remove('active');
+                    }
+                }
+            }
+        }
+        
+        // Run on DOMContentLoaded or immediately if DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeRequestFieldVisibility);
+        } else {
+            initializeRequestFieldVisibility();
+        }
         
         // Client generation functions
         async function checkClientGeneratorCLI(mode) {
@@ -4423,20 +5617,32 @@
         
         // Show Postman Export Dialog
         function showPostmanExportDialog() {
-            // Get file path from data attribute (most reliable)
+            // Get file path from data attribute (most reliable, always current)
             const resultDiv = document.getElementById('result');
-            const specFilePath = resultDiv ? resultDiv.getAttribute('data-file-path') : null;
+            let specFilePath = null;
+            
+            // First, try to get from data attribute (this is set when spec is generated/imported)
+            if (resultDiv) {
+                specFilePath = resultDiv.getAttribute('data-file-path');
+            }
+            
+            // If not found in data attribute, try global variable as fallback
+            if (!specFilePath && typeof lastGeneratedFilePath !== 'undefined' && lastGeneratedFilePath) {
+                specFilePath = lastGeneratedFilePath;
+            }
+            
+            // If still not found, try to extract from the result div's displayed file path
+            if (!specFilePath && resultDiv) {
+                const filePathMatch = resultDiv.textContent.match(/File saved to:.*?([^\s<>]+\.ya?ml)/i);
+                if (filePathMatch) {
+                    specFilePath = filePathMatch[1].trim();
+                    // Store it for future use
+                    resultDiv.setAttribute('data-file-path', specFilePath);
+                    lastGeneratedFilePath = specFilePath;
+                }
+            }
             
             if (!specFilePath) {
-                // Try global variable as fallback
-                if (typeof lastGeneratedFilePath !== 'undefined' && lastGeneratedFilePath) {
-                    // Scroll to result area first
-                    if (resultDiv) {
-                        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                    exportToPostman(lastGeneratedFilePath);
-                    return;
-                }
                 alert('Error: OpenAPI specification file path not found. Please generate or import the specification first.');
                 return;
             }
@@ -4446,6 +5652,7 @@
                 resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             
+            console.log('Exporting Postman collection from file:', specFilePath);
             exportToPostman(specFilePath);
         }
         
@@ -4463,6 +5670,29 @@
             if (statusDivs.length === 0) {
                 alert('Error: Result area not found. Please generate or import an OpenAPI specification first.');
                 return;
+            }
+
+            // Validate file path
+            if (!specFilePath || specFilePath.trim() === '') {
+                statusDivs.forEach(div => {
+                    div.innerHTML = `<div class="info-box" style="background-color: #f8d7da; border-left-color: #dc3545;"><strong>❌ Error:</strong> Invalid file path. Please generate a new OpenAPI specification first.</div>`;
+                });
+                return;
+            }
+
+            // Log the file path being used for debugging
+            console.log('Exporting Postman collection from file:', specFilePath);
+            console.log('Current lastGeneratedFilePath:', lastGeneratedFilePath);
+            
+            // Get the result div to verify the file path
+            const resultDiv = document.getElementById('result');
+            if (resultDiv) {
+                const storedPath = resultDiv.getAttribute('data-file-path');
+                console.log('Stored data-file-path:', storedPath);
+                if (storedPath && storedPath !== specFilePath) {
+                    console.warn('File path mismatch! Using stored path instead.');
+                    specFilePath = storedPath;
+                }
             }
 
             statusDivs.forEach(div => {
@@ -4484,7 +5714,9 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    const downloadUrl = `/api/download/${result.filename}`;
+                    // Add timestamp to prevent browser caching of old files
+                    const timestamp = Date.now();
+                    const downloadUrl = `/api/download/${result.filename}?t=${timestamp}`;
                     statusDivs.forEach(div => {
                         div.innerHTML = `
                             <div class="info-box" style="background-color: #d4edda; border-left-color: #28a745;">

@@ -1,6 +1,7 @@
 """Export OpenAPI specification to Postman collection format."""
 
 import json
+import copy
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
@@ -227,6 +228,35 @@ class PostmanExporter:
         
         return headers
     
+    def _resolve_schema_ref(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+        """Resolve $ref schema references to actual schema objects.
+        
+        Args:
+            schema: Schema dictionary that may contain $ref
+            
+        Returns:
+            Resolved schema dictionary (or original if resolution fails)
+        """
+        if not isinstance(schema, dict):
+            return schema
+        
+        # Check if schema has a $ref
+        if '$ref' in schema:
+            ref_path = schema['$ref']
+            # Handle internal references like #/components/schemas/SchemaName
+            if ref_path.startswith('#/components/schemas/'):
+                schema_name = ref_path.split('/')[-1]
+                schemas = self.components.get('schemas', {})
+                if schema_name in schemas:
+                    # Return a copy to avoid modifying the original
+                    resolved = schemas[schema_name]
+                    if isinstance(resolved, dict):
+                        # Make a copy to avoid reference issues
+                        return copy.deepcopy(resolved)
+                    return resolved
+        
+        return schema
+    
     def _build_postman_body(self, operation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Build Postman request body from OpenAPI operation.
         
@@ -263,9 +293,23 @@ class PostmanExporter:
             }
             if example:
                 body['raw'] = json.dumps(example, indent=2)
+            elif schema:
+                # Resolve $ref if present
+                resolved_schema = self._resolve_schema_ref(schema)
+                # If resolution failed (still has $ref), try to resolve again recursively
+                if isinstance(resolved_schema, dict) and '$ref' in resolved_schema:
+                    # Try one more time - maybe it's a nested reference
+                    resolved_schema = self._resolve_schema_ref(resolved_schema)
+                # Generate example from resolved schema
+                example_value = self._generate_example_from_schema(resolved_schema)
+                if example_value is not None:
+                    body['raw'] = json.dumps(example_value, indent=2)
+                else:
+                    # If schema couldn't generate an example, use empty object
+                    body['raw'] = '{}'
             else:
-                # Generate example from schema
-                body['raw'] = json.dumps(self._generate_example_from_schema(schema), indent=2)
+                # No schema provided, use empty object
+                body['raw'] = '{}'
         
         return body
     
@@ -334,7 +378,13 @@ class PostmanExporter:
                 if example:
                     response_obj['body'] = json.dumps(example, indent=2)
                 elif schema:
-                    response_obj['body'] = json.dumps(self._generate_example_from_schema(schema), indent=2)
+                    # Resolve $ref if present
+                    resolved_schema = self._resolve_schema_ref(schema)
+                    example_value = self._generate_example_from_schema(resolved_schema)
+                    if example_value is not None:
+                        response_obj['body'] = json.dumps(example_value, indent=2)
+                    else:
+                        response_obj['body'] = '{}'
                 
                 responses.append(response_obj)
         
@@ -411,22 +461,38 @@ class PostmanExporter:
         """Generate example value from JSON schema.
         
         Args:
-            schema: JSON schema object
+            schema: JSON schema object (should already be resolved, no $ref)
             
         Returns:
             Example value
         """
+        if not isinstance(schema, dict):
+            return None
+        
+        # Handle $ref (shouldn't happen if resolved, but handle it anyway)
+        if '$ref' in schema:
+            resolved = self._resolve_schema_ref(schema)
+            if resolved != schema:  # If resolution worked
+                return self._generate_example_from_schema(resolved)
+            return None
+        
         schema_type = schema.get('type')
         
         if schema_type == 'object':
             example = {}
             properties = schema.get('properties', {})
             for prop_name, prop_schema in properties.items():
-                example[prop_name] = self._generate_example_from_schema(prop_schema)
+                # Resolve $ref in property schemas
+                resolved_prop = self._resolve_schema_ref(prop_schema) if isinstance(prop_schema, dict) else prop_schema
+                example[prop_name] = self._generate_example_from_schema(resolved_prop)
             return example
         elif schema_type == 'array':
             items = schema.get('items', {})
-            return [self._generate_example_from_schema(items)]
+            if items:
+                # Resolve $ref in items schema
+                resolved_items = self._resolve_schema_ref(items) if isinstance(items, dict) else items
+                return [self._generate_example_from_schema(resolved_items)]
+            return []
         elif schema_type == 'string':
             format_type = schema.get('format', '')
             if format_type == 'email':
@@ -446,6 +512,9 @@ class PostmanExporter:
         elif schema_type == 'boolean':
             return True
         else:
+            # If no type specified, try to infer from properties
+            if 'properties' in schema:
+                return self._generate_example_from_schema({'type': 'object', 'properties': schema['properties']})
             return None
     
     def export_to_file(self, output_file: str) -> str:

@@ -7,6 +7,8 @@ import tempfile
 import zipfile
 import urllib.request
 import sys
+import copy
+import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple, List
 import json
@@ -265,7 +267,9 @@ class ClientGenerator:
         output_dir: Optional[str] = None,
         package_name: Optional[str] = None,
         library: Optional[str] = None,
-        additional_properties: Optional[Dict[str, str]] = None
+        additional_properties: Optional[Dict[str, str]] = None,
+        skip_validate_spec: bool = False,
+        tag_strategy: str = 'primary'
     ) -> Tuple[bool, str, Optional[str]]:
         """Generate client code from OpenAPI specification.
         
@@ -276,6 +280,10 @@ class ClientGenerator:
             package_name: Package/module name (optional)
             library: Library type (optional, uses default for language)
             additional_properties: Additional generator properties (optional)
+            skip_validate_spec: Skip OpenAPI spec validation
+            tag_strategy: How to handle multiple tags per operation:
+                - 'primary': Use only first tag (prevents duplication, default)
+                - 'all': Use all tags (may cause duplication and method renaming)
             
         Returns:
             Tuple of (success, message, output_directory)
@@ -323,7 +331,20 @@ class ClientGenerator:
             # Determine file extension from original file
             ext = spec_file_path.suffix or '.yaml'
             temp_spec_file = Path(temp_spec_dir) / f'openapi-spec{ext}'
-            shutil.copy2(spec_file_path, temp_spec_file)
+            
+            # Preprocess spec to handle tag strategy (normalize tags to prevent duplication)
+            if tag_strategy == 'primary':
+                spec_content = self._normalize_tags_for_codegen(spec_file_path)
+                # Write normalized spec to temp file
+                with open(temp_spec_file, 'w', encoding='utf-8') as f:
+                    if ext.lower() in ['.yaml', '.yml']:
+                        yaml.dump(spec_content, f, default_flow_style=False, sort_keys=False)
+                    else:
+                        json.dump(spec_content, f, indent=2)
+            else:
+                # Use spec as-is for 'all' strategy
+                shutil.copy2(spec_file_path, temp_spec_file)
+            
             spec_file_to_use = str(temp_spec_file).replace('\\', '/')
             cleanup_temp = True
             
@@ -365,6 +386,10 @@ class ClientGenerator:
             if props_dict:
                 props = ','.join([f"{k}={v}" for k, v in props_dict.items()])
                 cmd.extend(['--additional-properties', props])
+            
+            # Add skip validation flag if requested (workaround for path validation issues)
+            if skip_validate_spec:
+                cmd.append('--skip-validate-spec')
             
             # Run generator
             try:
@@ -433,7 +458,9 @@ class ClientGenerator:
         language: str,
         package_name: Optional[str] = None,
         library: Optional[str] = None,
-        additional_properties: Optional[Dict[str, str]] = None
+        additional_properties: Optional[Dict[str, str]] = None,
+        skip_validate_spec: bool = False,
+        tag_strategy: str = 'primary'
     ) -> Tuple[bool, str, Optional[str]]:
         """Generate client code and package it into a ZIP file.
         
@@ -443,6 +470,8 @@ class ClientGenerator:
             package_name: Package/module name
             library: Library type
             additional_properties: Additional generator properties
+            skip_validate_spec: Skip OpenAPI spec validation (workaround for path issues)
+            tag_strategy: How to handle multiple tags ('primary' or 'all')
             
         Returns:
             Tuple of (success, message, zip_file_path)
@@ -453,7 +482,9 @@ class ClientGenerator:
             language=language,
             package_name=package_name,
             library=library,
-            additional_properties=additional_properties
+            additional_properties=additional_properties,
+            skip_validate_spec=skip_validate_spec,
+            tag_strategy=tag_strategy
         )
         
         if not success:
@@ -478,4 +509,46 @@ class ClientGenerator:
             pass
         
         return True, f"Client generated and packaged successfully", zip_file
+    
+    def _normalize_tags_for_codegen(self, spec_file: Path) -> Dict[str, Any]:
+        """Normalize tags in OpenAPI spec to prevent duplication in generated code.
+        
+        When an operation has multiple tags, the OpenAPI Generator CLI creates separate
+        API classes for each tag, causing code duplication and method renaming.
+        This method normalizes tags to use only the primary (first) tag for code generation,
+        while preserving other tags in an extension for documentation purposes.
+        
+        Args:
+            spec_file: Path to OpenAPI specification file
+            
+        Returns:
+            Normalized OpenAPI specification dictionary
+        """
+        # Load spec file
+        with open(spec_file, 'r', encoding='utf-8') as f:
+            if spec_file.suffix.lower() in ['.yaml', '.yml']:
+                spec = yaml.safe_load(f)
+            else:
+                spec = json.load(f)
+        
+        # Deep copy to avoid modifying original
+        spec_copy = copy.deepcopy(spec)
+        
+        # Normalize tags in all operations
+        for path, path_item in spec_copy.get('paths', {}).items():
+            for method, operation in path_item.items():
+                if method.lower() not in ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']:
+                    continue
+                
+                if not isinstance(operation, dict):
+                    continue
+                
+                tags = operation.get('tags', [])
+                if tags and len(tags) > 1:
+                    # Store all tags in extension for reference
+                    operation['x-original-tags'] = tags.copy()
+                    # Use only first tag for code generation
+                    operation['tags'] = [tags[0]]
+        
+        return spec_copy
 

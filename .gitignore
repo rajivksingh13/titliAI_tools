@@ -5,6 +5,7 @@ __pycache__/
 *.so
 .Python
 build/
+tests/
 develop-eggs/
 dist/
 downloads/
@@ -46,4 +47,7 @@ custom_output/
 # OS
 .DS_Store
 Thumbs.db
+
+# React frontend (removed - manual cleanup may be needed)
+react-frontend/
 

@@ -1,0 +1,160 @@
+{
+  "success": true,
+  "message": "Order created successfully",
+  "data": {
+    "order": {
+      "order_id": "ORD-2024-001234",
+      "status": "pending",
+      "created_at": "2024-01-20T15:30:00Z",
+      "updated_at": "2024-01-20T15:30:00Z",
+      "customer": {
+        "id": 12345,
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "membership": {
+          "tier": "premium",
+          "since": "2023-06-15",
+          "benefits": ["free_shipping", "priority_support", "exclusive_deals"]
+        }
+      },
+      "items": [
+        {
+          "item_id": "ITEM-001",
+          "product": {
+            "id": "PROD-001",
+            "name": "Laptop",
+            "sku": "LAPTOP-TB-2024",
+            "category": {
+              "id": "CAT-001",
+              "name": "Electronics",
+              "parent": {
+                "id": "CAT-ROOT",
+                "name": "All Products"
+              }
+            },
+            "brand": {
+              "id": "BRAND-001",
+              "name": "TechBrand",
+              "logo_url": "https://example.com/logos/techbrand.png"
+            }
+          },
+          "quantity": 1,
+          "unit_price": 1299.99,
+          "total_price": 1299.99,
+          "status": "confirmed"
+        },
+        {
+          "item_id": "ITEM-002",
+          "product": {
+            "id": "PROD-002",
+            "name": "Wireless Mouse",
+            "sku": "MOUSE-WL-001",
+            "category": {
+              "id": "CAT-001",
+              "name": "Electronics",
+              "parent": {
+                "id": "CAT-ROOT",
+                "name": "All Products"
+              }
+            }
+          },
+          "quantity": 2,
+          "unit_price": 29.99,
+          "total_price": 59.98,
+          "status": "confirmed"
+        }
+      ],
+      "payment": {
+        "payment_id": "PAY-2024-001234",
+        "method": {
+          "type": "credit_card",
+          "last_four": "1111",
+          "brand": "Visa",
+          "expiry": "12/25"
+        },
+        "amount": 1348.77,
+        "currency": "USD",
+        "status": "authorized",
+        "transaction": {
+          "id": "TXN-abc123xyz",
+          "gateway": "stripe",
+          "response": {
+            "code": "success",
+            "message": "Payment authorized",
+            "reference": "ch_1234567890"
+          }
+        }
+      },
+      "shipping": {
+        "shipping_id": "SHIP-2024-001234",
+        "method": "express",
+        "carrier": "FedEx",
+        "tracking_number": "1Z999AA10123456784",
+        "address": {
+          "street": "123 Main Street",
+          "city": "New York",
+          "state": "NY",
+          "zipcode": "10001",
+          "country": "USA"
+        },
+        "cost": 15.99,
+        "estimated_delivery": {
+          "date": "2024-01-25",
+          "time_window": {
+            "start": "09:00",
+            "end": "17:00"
+          }
+        },
+        "status": "pending"
+      },
+      "pricing": {
+        "subtotal": 1359.97,
+        "tax": {
+          "rate": 0.08,
+          "amount": 108.80,
+          "breakdown": [
+            {
+              "type": "state_tax",
+              "rate": 0.06,
+              "amount": 81.60
+            },
+            {
+              "type": "local_tax",
+              "rate": 0.02,
+              "amount": 27.20
+            }
+          ]
+        },
+        "shipping": 15.99,
+        "discount": {
+          "code": "SAVE10",
+          "amount": 135.99,
+          "type": "percentage",
+          "description": "10% off on orders over $1000"
+        },
+        "total": 1348.77,
+        "currency": "USD"
+      }
+    },
+    "notifications": [
+      {
+        "type": "email",
+        "status": "sent",
+        "sent_at": "2024-01-20T15:30:05Z",
+        "template": "order_confirmation"
+      },
+      {
+        "type": "sms",
+        "status": "pending",
+        "template": "order_tracking"
+      }
+    ]
+  },
+  "metadata": {
+    "request_id": "req_xyz789abc",
+    "timestamp": "2024-01-20T15:30:00Z",
+    "version": "v1",
+    "processing_time_ms": 245
+  }
+}
+

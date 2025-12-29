@@ -9,6 +9,7 @@ import tempfile
 import os
 import sys
 import socket
+import copy
 from pathlib import Path
 
 # Ensure site-packages are available for imports
@@ -235,8 +236,12 @@ def generate():
             include_default_headers=not data.get('no_default_headers', False)
         )
         
+        # Ensure file is fully written and flushed to disk
+        import time
+        time.sleep(0.1)  # Small delay to ensure file system sync
+        
         # Read generated file for response
-        with open(final_output_file, 'r') as f:
+        with open(final_output_file, 'r', encoding='utf-8') as f:
             yaml_content = f.read()
         
         # Clean up temporary files (but keep the final output file)
@@ -422,8 +427,12 @@ def generate_multi():
             servers=[{"url": request.json.get('server_url'), "description": "API Server"}] if request.json.get('server_url') else None
         )
         
+        # Ensure file is fully written and flushed to disk
+        import time
+        time.sleep(0.1)  # Small delay to ensure file system sync
+        
         # Read generated file for response
-        with open(final_output_file, 'r') as f:
+        with open(final_output_file, 'r', encoding='utf-8') as f:
             yaml_content = f.read()
         
         # Clean up temporary files (but keep the final output file)
@@ -531,8 +540,12 @@ def generate_multi_form():
             servers=[{"url": request.json.get('server_url'), "description": "API Server"}] if request.json.get('server_url') else None
         )
         
+        # Ensure file is fully written and flushed to disk
+        import time
+        time.sleep(0.1)  # Small delay to ensure file system sync
+        
         # Read generated file for response
-        with open(final_output_file, 'r') as f:
+        with open(final_output_file, 'r', encoding='utf-8') as f:
             yaml_content = f.read()
         
         # Clean up temporary files (but keep the final output file)
@@ -1003,6 +1016,8 @@ def generate_client():
         package_name = data.get('package_name')
         library = data.get('library')
         additional_properties = data.get('additional_properties', {})
+        skip_validate_spec = data.get('skip_validate_spec', False)  # Allow skipping validation
+        tag_strategy = data.get('tag_strategy', 'primary')  # Default to 'primary' to prevent duplication
         
         if not spec_file:
             return jsonify({'error': 'spec_file is required'}), 400
@@ -1048,7 +1063,9 @@ def generate_client():
             language=language,
             package_name=package_name,
             library=library,
-            additional_properties=additional_properties
+            additional_properties=additional_properties,
+            skip_validate_spec=skip_validate_spec,
+            tag_strategy=tag_strategy
         )
         
         if not success:
@@ -1456,14 +1473,68 @@ def export_postman():
         if not spec_file:
             return jsonify({'error': 'spec_file is required'}), 400
         
+        # Normalize file path (handle Windows paths and relative paths)
+        spec_file = str(spec_file).strip()
+        if '\\' in spec_file:
+            spec_file = os.path.normpath(spec_file)
+        spec_file = os.path.abspath(spec_file)
+        
         # Load OpenAPI spec
         spec_path = Path(spec_file)
         if not spec_path.exists():
             return jsonify({'error': f'OpenAPI spec file not found: {spec_file}'}), 400
         
-        # Load and parse the spec file
-        with open(spec_file, 'r', encoding='utf-8') as f:
-            content = f.read()
+        # Get file modification time to ensure we're reading the latest version
+        file_mtime = os.path.getmtime(spec_file)
+        file_size = os.path.getsize(spec_file)
+        
+        # Load and parse the spec file (read fresh from disk)
+        # Force a fresh read by opening the file each time with explicit encoding
+        # Read in binary mode first to avoid any text encoding caching issues
+        try:
+            # Retry mechanism to handle file system delays
+            max_retries = 3
+            content = None
+            for attempt in range(max_retries):
+                # Use binary mode first, then decode to ensure we get fresh content
+                with open(spec_file, 'rb') as f:
+                    raw_content = f.read()
+                
+                # Verify we got content
+                if len(raw_content) == 0:
+                    if attempt < max_retries - 1:
+                        import time
+                        time.sleep(0.1)  # Wait a bit and retry
+                        continue
+                    return jsonify({'error': 'Spec file is empty'}), 400
+                
+                # Decode with UTF-8
+                content = raw_content.decode('utf-8')
+                
+                # Verify file modification time hasn't changed (file is stable)
+                current_mtime = os.path.getmtime(spec_file)
+                current_size = os.path.getsize(spec_file)
+                if current_mtime == file_mtime and current_size == file_size:
+                    # File is stable, we can use this content
+                    break
+                elif attempt < max_retries - 1:
+                    # File changed, update our reference and retry
+                    file_mtime = current_mtime
+                    file_size = current_size
+                    import time
+                    time.sleep(0.1)  # Wait a bit for file to stabilize
+                    continue
+                else:
+                    # Last attempt, use what we have
+                    break
+                    
+            if content is None:
+                return jsonify({'error': 'Failed to read spec file after retries'}), 400
+                
+        except IOError as e:
+            return jsonify({'error': f'Failed to read spec file: {str(e)}'}), 400
+        except UnicodeDecodeError as e:
+            return jsonify({'error': f'Failed to decode spec file (not UTF-8): {str(e)}'}), 400
         
         # Try to parse as YAML first, then JSON
         try:
@@ -1485,13 +1556,35 @@ def export_postman():
         if not isinstance(openapi_spec, dict):
             return jsonify({'error': 'Invalid OpenAPI spec format: expected dictionary'}), 400
         
-        # Export to Postman
-        exporter = PostmanExporter(openapi_spec)
+        # Verify paths exist in the spec
+        if 'paths' not in openapi_spec or not openapi_spec.get('paths'):
+            return jsonify({'error': 'OpenAPI spec contains no paths'}), 400
         
-        # Save to temp directory
+        # Debug: Verify what paths we're processing (for troubleshooting)
+        paths_in_spec = openapi_spec.get('paths', {})
+        paths_info = []
+        for path, methods in paths_in_spec.items():
+            for method in methods.keys():
+                if method.lower() in ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']:
+                    paths_info.append(f"{method.upper()} {path}")
+        
+        # Create a deep copy of the spec to ensure no reference issues
+        spec_copy = copy.deepcopy(openapi_spec)
+        
+        # Export to Postman (creates a new exporter instance each time with fresh spec)
+        # Create a fresh exporter instance to ensure no caching
+        exporter = PostmanExporter(spec_copy)
+        
+        # Save to temp directory (new directory each time to avoid conflicts)
         temp_dir = tempfile.mkdtemp(prefix='postman-export-')
         output_file = os.path.join(temp_dir, 'postman_collection.json')
+        
+        # Export the collection
         exporter.export_to_file(output_file)
+        
+        # Verify the exported file exists and has content
+        if not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
+            return jsonify({'error': 'Failed to generate Postman collection file'}), 500
         
         filename = os.path.basename(output_file)
         
@@ -1516,14 +1609,67 @@ def export_html_docs():
         if not spec_file:
             return jsonify({'error': 'spec_file is required'}), 400
         
+        # Normalize file path (handle Windows paths and relative paths)
+        spec_file = str(spec_file).strip()
+        if '\\' in spec_file:
+            spec_file = os.path.normpath(spec_file)
+        spec_file = os.path.abspath(spec_file)
+        
         # Load OpenAPI spec
         spec_path = Path(spec_file)
         if not spec_path.exists():
             return jsonify({'error': f'OpenAPI spec file not found: {spec_file}'}), 400
         
-        # Load and parse the spec file
-        with open(spec_file, 'r', encoding='utf-8') as f:
-            content = f.read()
+        # Get file modification time to ensure we're reading the latest version
+        file_mtime = os.path.getmtime(spec_file)
+        file_size = os.path.getsize(spec_file)
+        
+        # Load and parse the spec file (read fresh from disk)
+        # Use same robust reading logic as Postman export
+        try:
+            # Retry mechanism to handle file system delays
+            max_retries = 3
+            content = None
+            for attempt in range(max_retries):
+                # Use binary mode first, then decode to ensure we get fresh content
+                with open(spec_file, 'rb') as f:
+                    raw_content = f.read()
+                
+                # Verify we got content
+                if len(raw_content) == 0:
+                    if attempt < max_retries - 1:
+                        import time
+                        time.sleep(0.1)  # Wait a bit and retry
+                        continue
+                    return jsonify({'error': 'Spec file is empty'}), 400
+                
+                # Decode with UTF-8
+                content = raw_content.decode('utf-8')
+                
+                # Verify file modification time hasn't changed (file is stable)
+                current_mtime = os.path.getmtime(spec_file)
+                current_size = os.path.getsize(spec_file)
+                if current_mtime == file_mtime and current_size == file_size:
+                    # File is stable, we can use this content
+                    break
+                elif attempt < max_retries - 1:
+                    # File changed, update our reference and retry
+                    file_mtime = current_mtime
+                    file_size = current_size
+                    import time
+                    time.sleep(0.1)  # Wait a bit for file to stabilize
+                    continue
+                else:
+                    # Last attempt, use what we have
+                    break
+                    
+            if content is None:
+                return jsonify({'error': 'Failed to read spec file after retries'}), 400
+                
+        except IOError as e:
+            return jsonify({'error': f'Failed to read spec file: {str(e)}'}), 400
+        except UnicodeDecodeError as e:
+            return jsonify({'error': f'Failed to decode spec file (not UTF-8): {str(e)}'}), 400
         
         # Try to parse as YAML first, then JSON
         try:
@@ -1545,8 +1691,11 @@ def export_html_docs():
         if not isinstance(openapi_spec, dict):
             return jsonify({'error': 'Invalid OpenAPI spec format: expected dictionary'}), 400
         
+        # Create a deep copy of the spec to ensure no reference issues
+        spec_copy = copy.deepcopy(openapi_spec)
+        
         # Generate HTML docs
-        generator = HTMLDocsGenerator(openapi_spec, style=style)
+        generator = HTMLDocsGenerator(spec_copy, style=style)
         
         # Save to temp directory
         temp_dir = tempfile.mkdtemp(prefix='html-docs-')
@@ -1582,14 +1731,67 @@ def export_pdf_word():
         if format_type not in ['pdf', 'word']:
             return jsonify({'error': 'format must be "pdf" or "word"'}), 400
         
+        # Normalize file path (handle Windows paths and relative paths)
+        spec_file = str(spec_file).strip()
+        if '\\' in spec_file:
+            spec_file = os.path.normpath(spec_file)
+        spec_file = os.path.abspath(spec_file)
+        
         # Load OpenAPI spec
         spec_path = Path(spec_file)
         if not spec_path.exists():
             return jsonify({'error': f'OpenAPI spec file not found: {spec_file}'}), 400
         
-        # Load and parse the spec file
-        with open(spec_file, 'r', encoding='utf-8') as f:
-            content = f.read()
+        # Get file modification time to ensure we're reading the latest version
+        file_mtime = os.path.getmtime(spec_file)
+        file_size = os.path.getsize(spec_file)
+        
+        # Load and parse the spec file (read fresh from disk)
+        # Use same robust reading logic as Postman export
+        try:
+            # Retry mechanism to handle file system delays
+            max_retries = 3
+            content = None
+            for attempt in range(max_retries):
+                # Use binary mode first, then decode to ensure we get fresh content
+                with open(spec_file, 'rb') as f:
+                    raw_content = f.read()
+                
+                # Verify we got content
+                if len(raw_content) == 0:
+                    if attempt < max_retries - 1:
+                        import time
+                        time.sleep(0.1)  # Wait a bit and retry
+                        continue
+                    return jsonify({'error': 'Spec file is empty'}), 400
+                
+                # Decode with UTF-8
+                content = raw_content.decode('utf-8')
+                
+                # Verify file modification time hasn't changed (file is stable)
+                current_mtime = os.path.getmtime(spec_file)
+                current_size = os.path.getsize(spec_file)
+                if current_mtime == file_mtime and current_size == file_size:
+                    # File is stable, we can use this content
+                    break
+                elif attempt < max_retries - 1:
+                    # File changed, update our reference and retry
+                    file_mtime = current_mtime
+                    file_size = current_size
+                    import time
+                    time.sleep(0.1)  # Wait a bit for file to stabilize
+                    continue
+                else:
+                    # Last attempt, use what we have
+                    break
+                    
+            if content is None:
+                return jsonify({'error': 'Failed to read spec file after retries'}), 400
+                
+        except IOError as e:
+            return jsonify({'error': f'Failed to read spec file: {str(e)}'}), 400
+        except UnicodeDecodeError as e:
+            return jsonify({'error': f'Failed to decode spec file (not UTF-8): {str(e)}'}), 400
         
         # Try to parse as YAML first, then JSON
         try:
@@ -1611,8 +1813,11 @@ def export_pdf_word():
         if not isinstance(openapi_spec, dict):
             return jsonify({'error': 'Invalid OpenAPI spec format: expected dictionary'}), 400
         
+        # Create a deep copy of the spec to ensure no reference issues
+        spec_copy = copy.deepcopy(openapi_spec)
+        
         # Export to PDF or Word
-        exporter = PDFWordExporter(openapi_spec)
+        exporter = PDFWordExporter(spec_copy)
         
         # Save to temp directory
         temp_dir = tempfile.mkdtemp(prefix=f'{format_type}-export-')
@@ -1697,7 +1902,8 @@ def download_file(filename):
         for pattern in possible_paths:
             matches = glob.glob(pattern)
             if matches:
-                file_path = matches[0]
+                # Get the most recent file (newest modification time) to avoid old cached files
+                file_path = max(matches, key=os.path.getmtime)
                 break
         
         # Also try direct temp directory
@@ -1711,7 +1917,12 @@ def download_file(filename):
         if not os.path.exists(file_path):
             return jsonify({'error': 'File not found'}), 404
         
-        return send_file(file_path, as_attachment=True, download_name=filename)
+        # Send file with no-cache headers to prevent browser caching of old files
+        response = send_file(file_path, as_attachment=True, download_name=filename)
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1720,6 +1931,7 @@ def find_available_port(start_port=5000, max_attempts=10):
     
     On macOS, port 5000 is often used by AirPlay Receiver, so we need
     to find an alternative port if 5000 is not available.
+    Works on both Windows and macOS/Linux.
     
     Args:
         start_port: The port to start checking from
@@ -1727,21 +1939,60 @@ def find_available_port(start_port=5000, max_attempts=10):
         
     Returns:
         An available port number
+        
+    Raises:
+        RuntimeError: If no available port is found in the specified range
     """
     for port in range(start_port, start_port + max_attempts):
         try:
+            # Create socket with SO_REUSEADDR to handle TIME_WAIT states
+            # This allows reuse of ports that were recently closed
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                # Set SO_REUSEADDR to allow reuse of port in TIME_WAIT state
+                # This is important for rapid restarts
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                
+                # Try to bind to the port
+                # On Windows: OSError with errno 10048 (WSAEADDRINUSE)
+                # On macOS/Linux: OSError with errno 48 (EADDRINUSE)
                 s.bind(('127.0.0.1', port))
+                
+                # If bind succeeds, port is available
+                # Note: We don't need to listen() here, just checking if bind works
                 return port
-        except OSError:
-            # Port is in use, try next one
+        except OSError as e:
+            # Port is in use or binding failed
+            # On Windows: errno 10048 (WSAEADDRINUSE)
+            # On macOS/Linux: errno 48 (EADDRINUSE)
+            # Continue to try next port
             continue
-    # If no port found, raise an error
-    raise RuntimeError(f"Could not find an available port in range {start_port}-{start_port + max_attempts - 1}")
+        except Exception as e:
+            # Unexpected error - log and continue
+            print(f"Warning: Unexpected error checking port {port}: {e}", file=sys.stderr)
+            continue
+    
+    # If no port found, raise an error with helpful message
+    raise RuntimeError(
+        f"Could not find an available port in range {start_port}-{start_port + max_attempts - 1}. "
+        f"All ports appear to be in use. Please close other applications using these ports or "
+        f"try running the application later."
+    )
 
 if __name__ == '__main__':
     # Find an available port (macOS often has port 5000 occupied by AirPlay)
-    port = find_available_port(start_port=5000, max_attempts=10)
+    try:
+        port = find_available_port(start_port=5000, max_attempts=10)
+    except RuntimeError as e:
+        print("=" * 50)
+        print("ERROR: Port Allocation Failed")
+        print("=" * 50)
+        print(str(e))
+        print("\nPlease try one of the following:")
+        print("1. Close other applications using ports 5000-5009")
+        print("2. Wait a few seconds and try again")
+        print("3. On macOS: Disable AirPlay Receiver (System Preferences > Sharing)")
+        print("=" * 50)
+        sys.exit(1)
     
     print("=" * 50)
     print("OpenAPI Generator - Web UI")
@@ -1750,9 +2001,27 @@ if __name__ == '__main__':
     print(f"Server will be available at: http://localhost:{port}")
     if port != 5000:
         print(f"Note: Port 5000 was in use, using port {port} instead")
+        if sys.platform == 'darwin':  # macOS
+            print("   (This is common on macOS when AirPlay Receiver is enabled)")
     print("Press Ctrl+C to stop the server")
     print("=" * 50)
+    
     # Enable debug mode for development to auto-reload templates
     # Set debug=False for production
-    app.run(host='127.0.0.1', port=port, debug=True, use_reloader=True)
+    try:
+        app.run(host='127.0.0.1', port=port, debug=True, use_reloader=True)
+    except OSError as e:
+        # If Flask fails to bind (shouldn't happen if find_available_port worked correctly)
+        # but handle it gracefully just in case
+        print("\n" + "=" * 50)
+        print("ERROR: Failed to start server")
+        print("=" * 50)
+        print(f"Could not bind to port {port}: {e}")
+        print("\nThis might happen if:")
+        print("1. Another process started using the port between the check and binding")
+        print("2. You don't have permission to bind to this port")
+        print("3. On macOS: AirPlay Receiver just started using port 5000")
+        print("\nPlease try running the application again.")
+        print("=" * 50)
+        sys.exit(1)
 

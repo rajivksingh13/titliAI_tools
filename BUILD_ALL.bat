@@ -223,6 +223,18 @@ if exist start_ui.sh (
     echo WARNING: start_ui.sh not found, skipping...
 )
 
+REM Copy LICENSE file
+if exist LICENSE (
+    copy LICENSE "%TEMP_DIR%\%PACKAGE_NAME%\" >nul
+    if errorlevel 1 (
+        echo WARNING: Failed to copy LICENSE
+    ) else (
+        echo   ✓ LICENSE
+    )
+) else (
+    echo WARNING: LICENSE not found, skipping...
+)
+
 REM Copy RUNBOOK_GUIDE.md (Web UI run-book)
 if exist RUNBOOK_GUIDE.md (
     copy RUNBOOK_GUIDE.md "%TEMP_DIR%\%PACKAGE_NAME%\" >nul
@@ -291,6 +303,7 @@ if exist dist\openapi-gen-cli (
 if exist dist\openapi-gen-ui (
     echo   - openapi-gen-ui (UI executable - macOS/Linux)
 )
+echo   - LICENSE (MIT License)
 echo   - README.txt (User documentation)
 echo   - START_UI.bat (Windows launcher)
 echo   - start_ui.sh (Linux/macOS launcher)

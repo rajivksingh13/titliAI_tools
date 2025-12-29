@@ -228,6 +228,9 @@ class APIImporter:
                     # Parse URL to get path
                     parsed_url = urlparse(url_path)
                     path = parsed_url.path or '/'
+                    # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+                    if not path.startswith('/'):
+                        path = '/' + path
                     
                     # Get operation details
                     operation_id = item.get('name', f"{method.lower()}_{path.replace('/', '_').strip('_')}")
@@ -401,6 +404,8 @@ class APIImporter:
         
         # Convert paths
         for path, path_item in swagger_spec.get('paths', {}).items():
+            # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+            normalized_path = path if path.startswith('/') else '/' + path
             openapi_path = {}
             for method, operation in path_item.items():
                 if method.lower() in ['get', 'post', 'put', 'delete', 'patch', 'head', 'options']:
@@ -411,7 +416,7 @@ class APIImporter:
                             if 'in' not in param:
                                 param['in'] = 'query'
                     openapi_path[method.lower()] = openapi_operation
-            openapi_spec['paths'][path] = openapi_path
+            openapi_spec['paths'][normalized_path] = openapi_path
         
         return openapi_spec
     
@@ -478,6 +483,9 @@ class APIImporter:
         
         # Build OpenAPI spec
         path = parsed_url.path or '/'
+        # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+        if not path.startswith('/'):
+            path = '/' + path
         operation_id = f"{method.lower()}_{path.replace('/', '_').strip('_')}"
         
         openapi_spec = {
@@ -539,6 +547,9 @@ class APIImporter:
             url = request.get('url', '')
             parsed_url = urlparse(url)
             path = parsed_url.path or '/'
+            # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+            if not path.startswith('/'):
+                path = '/' + path
             method = request.get('method', 'GET').upper()
             
             if path not in paths:
@@ -727,6 +738,9 @@ class APIImporter:
             parsed_url = urlparse(service_url)
             base_path = parsed_url.path.rstrip('/') if parsed_url.path else ''
             full_path = f"{base_path}{route_path}"
+            # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+            if not full_path.startswith('/'):
+                full_path = '/' + full_path
             
             for method in methods:
                 method = method.upper()
