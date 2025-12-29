@@ -49,6 +49,15 @@ if errorlevel 1 (
 )
 echo.
 
+echo [Setup] Installing dependencies...
+python -m pip install -r requirements.txt --quiet
+if errorlevel 1 (
+    echo WARNING: Failed to install some dependencies. Building may fail.
+) else (
+    echo ✓ Dependencies installed successfully
+)
+echo.
+
 REM ========================================
 REM Step 2: Clean previous builds
 REM ========================================
