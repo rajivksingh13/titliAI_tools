@@ -681,11 +681,43 @@ class GitIntegration:
             
             branches = []
             for line in result.stdout.strip().split('\n'):
-                if line.strip() and remote in line:
-                    # Extract branch name from 'remotes/origin/branch-name'
-                    branch = line.strip().replace(f'remotes/{remote}/', '').strip()
-                    if branch and not branch.startswith('HEAD'):
-                        branches.append(branch)
+                if not line.strip() or remote not in line:
+                    continue
+                
+                # Clean up the line - remove leading asterisk and whitespace
+                line_clean = line.strip().lstrip('* ').strip()
+                
+                # Skip if empty after cleaning
+                if not line_clean:
+                    continue
+                
+                # Handle symbolic references (format: "origin/HEAD -> origin/master" or "remotes/origin/HEAD -> origin/master")
+                # These should be skipped completely as they're not real branches
+                if ' -> ' in line_clean:
+                    # This is a symbolic reference, skip it
+                    continue
+                
+                # Skip HEAD references (format: "origin/HEAD" or "remotes/origin/HEAD")
+                if '/HEAD' in line_clean or line_clean.endswith('/HEAD'):
+                    continue
+                
+                # Extract branch name
+                branch = line_clean
+                
+                # Remove 'remotes/origin/' prefix if present
+                if branch.startswith(f'remotes/{remote}/'):
+                    branch = branch.replace(f'remotes/{remote}/', '', 1)
+                # Remove 'origin/' prefix if present (for direct origin/branch format)
+                elif branch.startswith(f'{remote}/'):
+                    branch = branch.replace(f'{remote}/', '', 1)
+                
+                # Skip if branch name is empty or still contains problematic characters
+                if not branch or ' -> ' in branch or branch.startswith('HEAD'):
+                    continue
+                
+                # Add the cleaned branch name (should be just the branch name like 'master')
+                if branch:
+                    branches.append(branch)
             
             return sorted(branches)
         except subprocess.CalledProcessError:
@@ -776,11 +808,12 @@ class GitIntegration:
         except FileNotFoundError:
             return False, "Git is not installed"
     
-    def checkout_branch(self, branch_name: str) -> Tuple[bool, str]:
+    def checkout_branch(self, branch_name: str, auto_stash: bool = True) -> Tuple[bool, str]:
         """Checkout an existing branch.
         
         Args:
             branch_name: Name of the branch to checkout (can be local branch or remote branch like 'origin/branch-name')
+            auto_stash: If True, automatically stash uncommitted changes before checkout
             
         Returns:
             Tuple of (success, message)
@@ -788,12 +821,41 @@ class GitIntegration:
         if not self.is_git_repo():
             return False, "Not a Git repository"
         
-        # Clean branch name - remove 'origin/' prefix if present
+        original_branch_name = branch_name
+        
+        # Handle symbolic references (format: "origin/HEAD -> origin/master")
+        # Extract the actual branch name after the arrow
+        if ' -> ' in branch_name:
+            # Extract the branch name after the arrow and clean it
+            parts = branch_name.split(' -> ', 1)
+            if len(parts) == 2:
+                branch_name = parts[1].strip()
+            else:
+                # Invalid format, return error
+                return False, f"Invalid branch name format: '{original_branch_name}' appears to be a symbolic reference"
+        
+        # Additional check: if branch_name still contains "->", it's invalid
+        if ' -> ' in branch_name:
+            return False, f"Invalid branch name: '{original_branch_name}' appears to be a symbolic reference, not a branch"
+        
+        # Skip HEAD references
+        if '/HEAD' in branch_name or branch_name.endswith('/HEAD') or branch_name.startswith('HEAD'):
+            return False, f"Invalid branch name: '{original_branch_name}' is a HEAD reference, not a branch"
+        
+        # Clean branch name - remove 'origin/' or 'remotes/origin/' prefix if present
         clean_branch_name = branch_name
-        if branch_name.startswith('origin/'):
-            clean_branch_name = branch_name.replace('origin/', '', 1)
-        elif branch_name.startswith('remotes/origin/'):
+        remote_ref = None  # Store the remote ref for tracking branch creation
+        
+        if branch_name.startswith('remotes/origin/'):
             clean_branch_name = branch_name.replace('remotes/origin/', '', 1)
+            remote_ref = f'origin/{clean_branch_name}'
+        elif branch_name.startswith('origin/'):
+            clean_branch_name = branch_name.replace('origin/', '', 1)
+            remote_ref = branch_name  # Keep 'origin/branch-name' format for tracking
+        
+        # Final validation
+        if not clean_branch_name or clean_branch_name.startswith('HEAD') or ' -> ' in clean_branch_name:
+            return False, f"Invalid branch name: '{original_branch_name}' cannot be processed as a valid branch"
         
         try:
             # First, try to checkout the local branch
@@ -805,24 +867,66 @@ class GitIntegration:
                 check=True
             )
             return True, f"Switched to branch '{clean_branch_name}'"
-        except subprocess.CalledProcessError:
-            # If local branch doesn't exist, try to create a tracking branch from remote
-            if branch_name.startswith('origin/') or branch_name.startswith('remotes/origin/'):
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr if e.stderr else e.stdout
+            error_msg_lower = error_msg.lower()
+            
+            # Check if error is due to uncommitted changes
+            if ("your local changes" in error_msg_lower or "would be overwritten" in error_msg_lower or 
+                "please commit or stash" in error_msg_lower or "cannot switch branches" in error_msg_lower):
+                if auto_stash:
+                    # Try to stash and checkout again
+                    try:
+                        stash_result = subprocess.run(
+                            ["git", "stash", "push", "-m", f"Auto-stash before checkout to {clean_branch_name}"],
+                            cwd=self.repo_path,
+                            capture_output=True,
+                            text=True,
+                            check=True
+                        )
+                        # Retry checkout after stashing
+                        result = subprocess.run(
+                            ["git", "checkout", clean_branch_name],
+                            cwd=self.repo_path,
+                            capture_output=True,
+                            text=True,
+                            check=True
+                        )
+                        return True, f"Switched to branch '{clean_branch_name}' (uncommitted changes were stashed)"
+                    except subprocess.CalledProcessError as stash_error:
+                        stash_error_msg = stash_error.stderr if stash_error.stderr else stash_error.stdout
+                        # If stash fails, still try the checkout - maybe it will work now
+                        try:
+                            result = subprocess.run(
+                                ["git", "checkout", clean_branch_name],
+                                cwd=self.repo_path,
+                                capture_output=True,
+                                text=True,
+                                check=True
+                            )
+                            return True, f"Switched to branch '{clean_branch_name}'"
+                        except subprocess.CalledProcessError:
+                            return False, f"Failed to checkout branch '{clean_branch_name}': {error_msg}. Stash also failed: {stash_error_msg}"
+                else:
+                    return False, f"Failed to checkout branch '{clean_branch_name}': {error_msg}. Please commit or stash your changes first."
+            
+            # If local branch doesn't exist and we have a remote ref, try to create a tracking branch
+            if remote_ref:
                 try:
                     # Create and checkout tracking branch: git checkout -b local-branch origin/remote-branch
                     result = subprocess.run(
-                        ["git", "checkout", "-b", clean_branch_name, branch_name],
+                        ["git", "checkout", "-b", clean_branch_name, remote_ref],
                         cwd=self.repo_path,
                         capture_output=True,
                         text=True,
                         check=True
                     )
-                    return True, f"Created and switched to branch '{clean_branch_name}' tracking '{branch_name}'"
-                except subprocess.CalledProcessError as e:
-                    error_msg = e.stderr if e.stderr else e.stdout
-                    return False, f"Failed to checkout branch '{branch_name}': {error_msg}"
+                    return True, f"Created and switched to branch '{clean_branch_name}' tracking '{remote_ref}'"
+                except subprocess.CalledProcessError as e2:
+                    error_msg2 = e2.stderr if e2.stderr else e2.stdout
+                    return False, f"Failed to checkout branch '{clean_branch_name}': {error_msg2}"
             else:
-                # Try original branch name in case it's a valid remote branch format
+                # Try original branch name in case it's a valid format we didn't recognize
                 try:
                     result = subprocess.run(
                         ["git", "checkout", branch_name],
@@ -832,9 +936,9 @@ class GitIntegration:
                         check=True
                     )
                     return True, f"Switched to branch '{branch_name}'"
-                except subprocess.CalledProcessError as e:
-                    error_msg = e.stderr if e.stderr else e.stdout
-                    return False, f"Failed to checkout branch '{branch_name}': {error_msg}"
+                except subprocess.CalledProcessError as e3:
+                    error_msg3 = e3.stderr if e3.stderr else e3.stdout
+                    return False, f"Failed to checkout branch '{clean_branch_name}': {error_msg3}"
         except FileNotFoundError:
             return False, "Git is not installed"
     

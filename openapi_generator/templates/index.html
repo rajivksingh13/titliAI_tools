@@ -4081,7 +4081,15 @@
             try {
                 // Get file path from data attribute if available (more reliable)
                 const resultDiv = document.getElementById('result');
-                const actualFilePath = resultDiv ? (resultDiv.getAttribute('data-file-path') || filePath) : filePath;
+                let actualFilePath = resultDiv ? (resultDiv.getAttribute('data-file-path') || filePath) : filePath;
+                
+                // Fallback: Try to extract file path from result div text content
+                if ((!actualFilePath || !actualFilePath.trim()) && resultDiv) {
+                    const filePathMatch = resultDiv.textContent.match(/File saved to:.*?([^\s<>"']+\.ya?ml)/i);
+                    if (filePathMatch && filePathMatch[1]) {
+                        actualFilePath = filePathMatch[1].trim();
+                    }
+                }
                 
                 const repoPathInput = document.getElementById(inputId);
                 const repoPath = repoPathInput ? (repoPathInput.value.trim() || '.') : '.';
@@ -4164,13 +4172,19 @@
                 }
             }
             
+                // Validate file path
+                if (!actualFilePath || !actualFilePath.trim()) {
+                    alert('❌ Error: No file path available. Please generate or import an OpenAPI specification first.');
+                    return;
+                }
+            
                 // Create a simple dialog
                 const commitMessage = prompt('Enter commit message:', 'Update OpenAPI specification');
                 if (!commitMessage) return;
                 
                 const useCredentials = confirm('Use stored Git credentials? (Click OK to use stored credentials, Cancel to use system Git config)');
                 
-                commitAndPush(actualFilePath, commitMessage, useCredentials, repoPath, remoteUrl, branch, useExistingBranch, inputId);
+                commitAndPush(actualFilePath.trim(), commitMessage, useCredentials, repoPath, remoteUrl, branch, useExistingBranch, inputId);
             } catch (error) {
                 console.error('Error in showCommitPushDialogWithPath:', error);
                 alert('An error occurred while preparing to commit. Please try again.');
@@ -4181,6 +4195,16 @@
             const gitStatusDiv = document.getElementById('git-status');
             if (gitStatusDiv) {
                 gitStatusDiv.innerHTML = '<p><span class="spinner"></span> Preparing to commit and push...</p>';
+            }
+            
+            // Validate file path
+            if (!filePath || !filePath.trim()) {
+                const errorMsg = 'File path is required. Please generate or import an OpenAPI specification first.';
+                if (gitStatusDiv) {
+                    gitStatusDiv.innerHTML = `<div class="info-box" style="margin-top: 10px; background-color: #f8d7da; border-left-color: #dc3545;"><strong>❌ Error:</strong> ${errorMsg}</div>`;
+                }
+                alert('❌ Error: ' + errorMsg);
+                return;
             }
             
             try {
