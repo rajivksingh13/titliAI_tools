@@ -713,63 +713,141 @@ class APIImporter:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid Kong Gateway export: {e}")
         
-        # Kong exports typically have services and routes
+        # Kong exports can have routes at top level or nested inside services
         services = kong_data.get('services', [])
-        routes = kong_data.get('routes', [])
+        top_level_routes = kong_data.get('routes', [])
         
-        if not services and not routes:
+        if not services and not top_level_routes:
             raise ValueError("Kong export contains no services or routes")
         
         # Build OpenAPI spec from Kong services/routes
         paths = {}
+        all_routes = []
+        base_url = 'https://api.example.com'
         
-        for route in routes:
-            service_id = route.get('service', {}).get('id', '')
-            service = next((s for s in services if s.get('id') == service_id), None)
+        # Collect routes from services (routes nested inside services)
+        for service in services:
+            service_url = service.get('url', 'https://api.example.com')
+            if service_url:
+                parsed = urlparse(service_url)
+                base_url = f"{parsed.scheme}://{parsed.netloc}"
             
-            if not service:
+            # Routes can be nested inside service
+            service_routes = service.get('routes', [])
+            for route in service_routes:
+                # Add service context to route for processing
+                route_with_service = route.copy()
+                route_with_service['_service_url'] = service_url
+                route_with_service['_service_name'] = service.get('name', '')
+                all_routes.append(route_with_service)
+        
+        # Also collect top-level routes (if any)
+        for route in top_level_routes:
+            # Try to find associated service by service.id reference
+            service_ref = route.get('service', {})
+            service_id = service_ref.get('id', '') if isinstance(service_ref, dict) else service_ref
+            
+            service = None
+            if service_id:
+                service = next((s for s in services if s.get('id') == service_id), None)
+            
+            route_with_service = route.copy()
+            if service:
+                route_with_service['_service_url'] = service.get('url', 'https://api.example.com')
+                route_with_service['_service_name'] = service.get('name', '')
+            else:
+                route_with_service['_service_url'] = 'https://api.example.com'
+                route_with_service['_service_name'] = ''
+            all_routes.append(route_with_service)
+        
+        # Process all collected routes
+        for route in all_routes:
+            # Extract path and methods
+            route_paths = route.get('paths', [])
+            if not route_paths:
                 continue
             
-            # Extract path and methods
-            route_path = route.get('paths', ['/'])[0] if route.get('paths') else '/'
-            methods = route.get('methods', ['GET'])
-            
-            service_url = service.get('url', '')
-            parsed_url = urlparse(service_url)
-            base_path = parsed_url.path.rstrip('/') if parsed_url.path else ''
-            full_path = f"{base_path}{route_path}"
-            # Normalize path to ensure it starts with '/' (OpenAPI requirement)
-            if not full_path.startswith('/'):
-                full_path = '/' + full_path
-            
-            for method in methods:
-                method = method.upper()
-                if method not in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
-                    continue
+            # Kong routes can have multiple paths, process each one
+            for route_path in route_paths:
+                # Convert Kong path parameters (:id) to OpenAPI format ({id})
+                openapi_path = re.sub(r':(\w+)', r'{\1}', route_path)
                 
-                if full_path not in paths:
-                    paths[full_path] = {}
+                # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+                if not openapi_path.startswith('/'):
+                    openapi_path = '/' + openapi_path
                 
-                operation_id = f"{method.lower()}_{full_path.replace('/', '_').strip('_')}"
+                methods = route.get('methods', ['GET'])
+                if not methods:
+                    methods = ['GET']
                 
-                paths[full_path][method.lower()] = {
-                    'operationId': operation_id,
-                    'summary': f'{method} {full_path}',
-                    'description': f'Route: {route.get("name", "")}',
-                    'responses': {
-                        '200': {
-                            'description': 'Successful response',
-                            'content': {
-                                'application/json': {
-                                    'schema': {'type': 'object'}
+                # Get base path from service URL if available
+                service_url = route.get('_service_url', '')
+                if service_url:
+                    parsed_url = urlparse(service_url)
+                    base_path = parsed_url.path.rstrip('/') if parsed_url.path else ''
+                    if base_path:
+                        # Combine base path with route path
+                        full_path = f"{base_path}{openapi_path}"
+                    else:
+                        full_path = openapi_path
+                else:
+                    full_path = openapi_path
+                
+                # Normalize full path
+                if not full_path.startswith('/'):
+                    full_path = '/' + full_path
+                
+                # Process each HTTP method
+                for method in methods:
+                    method = method.upper()
+                    if method not in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+                        continue
+                    
+                    if full_path not in paths:
+                        paths[full_path] = {}
+                    
+                    # Generate operation ID
+                    route_name = route.get('name', '')
+                    if route_name:
+                        operation_id = route_name.replace(' ', '_').replace('-', '_').lower()
+                        if method.lower() not in operation_id:
+                            operation_id = f"{method.lower()}_{operation_id}"
+                    else:
+                        operation_id = f"{method.lower()}_{full_path.replace('/', '_').strip('_').replace('{', '').replace('}', '')}"
+                    
+                    # Create operation
+                    operation = {
+                        'operationId': operation_id,
+                        'summary': route.get('name', f'{method} {full_path}'),
+                        'description': f'Route: {route.get("name", "")}',
+                        'responses': {
+                            '200': {
+                                'description': 'Successful response',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'type': 'object'}
+                                    }
                                 }
                             }
                         }
                     }
-                }
+                    
+                    # Add path parameters if any
+                    path_params = re.findall(r'\{(\w+)\}', full_path)
+                    if path_params:
+                        operation['parameters'] = []
+                        for param_name in path_params:
+                            operation['parameters'].append({
+                                'name': param_name,
+                                'in': 'path',
+                                'required': True,
+                                'schema': {'type': 'string'},
+                                'description': f'Path parameter: {param_name}'
+                            })
+                    
+                    paths[full_path][method.lower()] = operation
         
-        # Extract base URL from first service
-        base_url = 'https://api.example.com'
+        # Extract base URL from first service if available
         if services:
             first_service_url = services[0].get('url', '')
             if first_service_url:
@@ -781,7 +859,7 @@ class APIImporter:
             'info': {
                 'title': 'Imported from Kong Gateway',
                 'version': '1.0.0',
-                'description': f'API imported from Kong Gateway with {len(routes)} routes'
+                'description': f'API imported from Kong Gateway with {len(all_routes)} routes'
             },
             'servers': [{'url': base_url}],
             'paths': paths
