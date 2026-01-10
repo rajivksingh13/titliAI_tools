@@ -10,7 +10,7 @@ import site
 # ============================================================================
 # Set to True to enable trial period (15 days by default, configurable in trial_manager.py)
 # Set to False to disable trial system completely
-ENABLE_TRIAL = False  # Change this to True/False to enable/disable trial
+ENABLE_TRIAL = True  # Change this to True/False to enable/disable trial
 # ============================================================================
 
 # Add current directory to path

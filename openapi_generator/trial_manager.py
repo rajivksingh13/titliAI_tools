@@ -104,7 +104,15 @@ class TrialManager:
             with open(self.trial_data_file, 'w') as f:
                 json.dump(data, f, indent=2)
             return True
-        except IOError:
+        except (IOError, OSError, PermissionError) as e:
+            # Log error for debugging (but don't expose to user)
+            import sys
+            print(f"Warning: Failed to save trial data: {e}", file=sys.stderr)
+            return False
+        except Exception as e:
+            # Catch any other unexpected errors
+            import sys
+            print(f"Warning: Unexpected error saving trial data: {e}", file=sys.stderr)
             return False
     
     def _encrypt_data(self, data: str) -> str:
@@ -130,18 +138,23 @@ class TrialManager:
         Returns:
             Tuple of (success, message)
         """
-        data = self._load_trial_data()
-        
-        # Check if trial already initialized
-        if 'machine_id' in data and 'start_date' in data:
-            # Verify machine ID matches (prevents copying trial data to another machine)
-            stored_machine_id = data.get('machine_id', '')
-            if stored_machine_id != self.machine_id:
-                # Different machine - reset trial
-                data = {}
-            else:
-                # Trial already initialized
-                return True, "Trial already initialized"
+        # Always check if file exists first
+        if self.trial_data_file.exists():
+            data = self._load_trial_data()
+            
+            # Check if trial already initialized
+            if 'machine_id' in data and 'start_date' in data:
+                # Verify machine ID matches (prevents copying trial data to another machine)
+                stored_machine_id = data.get('machine_id', '')
+                if stored_machine_id != self.machine_id:
+                    # Different machine - reset trial
+                    data = {}
+                else:
+                    # Trial already initialized
+                    return True, "Trial already initialized"
+        else:
+            # File doesn't exist - start fresh
+            data = {}
         
         # Initialize new trial
         start_date = datetime.now()
@@ -152,10 +165,11 @@ class TrialManager:
         data['start_date'] = self._encrypt_data(start_date_str)
         data['initialized'] = True
         
+        # Save trial data (this will create the file if it doesn't exist)
         if self._save_trial_data(data):
             return True, f"Trial period started. You have {self.TRIAL_DAYS} days to use this software."
         else:
-            return False, "Failed to initialize trial period. Please check file permissions."
+            return False, f"Failed to initialize trial period. Please check file permissions. Path: {self.trial_data_file}"
     
     def check_trial_status(self) -> Tuple[bool, str, Optional[int]]:
         """Check if trial is still valid.
@@ -168,9 +182,9 @@ class TrialManager:
         """
         data = self._load_trial_data()
         
-        # Check if trial is initialized
-        if 'machine_id' not in data or 'start_date' not in data:
-            # Not initialized - initialize now
+        # Check if trial is initialized or file doesn't exist
+        if not self.trial_data_file.exists() or 'machine_id' not in data or 'start_date' not in data:
+            # Not initialized or file missing - initialize now
             success, msg = self.initialize_trial()
             if success:
                 return True, msg, self.TRIAL_DAYS
