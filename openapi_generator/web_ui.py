@@ -83,6 +83,46 @@ else:
     # Running as script
     static_dir = os.path.join(os.path.dirname(__file__), 'static')
 
+def _normalize_tags_for_export(openapi_spec: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize tags in OpenAPI spec to prevent duplication in exports.
+    
+    When an operation has multiple tags, it appears in multiple folders/sections
+    in Postman, Redoc, and Swagger UI, causing visual duplication.
+    This method normalizes tags to use only the primary (first) tag for exports,
+    while preserving other tags in an extension for reference.
+    
+    Args:
+        openapi_spec: OpenAPI specification dictionary
+        
+    Returns:
+        Normalized OpenAPI specification dictionary (deep copy)
+    """
+    # Deep copy to avoid modifying original
+    spec_copy = copy.deepcopy(openapi_spec)
+    
+    # Normalize tags in all operations
+    paths = spec_copy.get('paths', {})
+    for path, path_item in paths.items():
+        if not isinstance(path_item, dict):
+            continue
+            
+        for method, operation in path_item.items():
+            if method.lower() not in ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']:
+                continue
+            
+            if not isinstance(operation, dict):
+                continue
+            
+            tags = operation.get('tags', [])
+            if tags and len(tags) > 1:
+                # Store all tags in extension for reference
+                operation['x-original-tags'] = tags.copy()
+                # Use only first tag to prevent duplication
+                operation['tags'] = [tags[0]]
+    
+    return spec_copy
+
+
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -1571,6 +1611,9 @@ def export_postman():
         # Create a deep copy of the spec to ensure no reference issues
         spec_copy = copy.deepcopy(openapi_spec)
         
+        # Normalize tags to prevent duplication (use only first tag for each operation)
+        spec_copy = _normalize_tags_for_export(spec_copy)
+        
         # Export to Postman (creates a new exporter instance each time with fresh spec)
         # Create a fresh exporter instance to ensure no caching
         exporter = PostmanExporter(spec_copy)
@@ -1693,6 +1736,9 @@ def export_html_docs():
         
         # Create a deep copy of the spec to ensure no reference issues
         spec_copy = copy.deepcopy(openapi_spec)
+        
+        # Normalize tags to prevent duplication in Redoc/Swagger UI (use only first tag for each operation)
+        spec_copy = _normalize_tags_for_export(spec_copy)
         
         # Generate HTML docs
         generator = HTMLDocsGenerator(spec_copy, style=style)

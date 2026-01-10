@@ -4,7 +4,7 @@ import json
 import yaml
 from typing import Dict, Any, List, Optional
 from pathlib import Path
-from .generator import OpenAPIGenerator
+from .generator import OpenAPIGenerator, NoAnchorDumper
 
 
 class MultiOperationGenerator:
@@ -199,7 +199,7 @@ class MultiOperationGenerator:
             tags=tag_definitions
         )
         
-        yaml_output = yaml.dump(openapi_doc, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        yaml_output = yaml.dump(openapi_doc, Dumper=NoAnchorDumper, default_flow_style=False, sort_keys=False, allow_unicode=True)
         
         if output_file:
             # Create output directory if it doesn't exist

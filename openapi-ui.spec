@@ -6,7 +6,7 @@ datas = [
     ('openapi_generator', 'openapi_generator'),
 ]
 binaries = []
-hiddenimports = ['openapi_generator', 'openapi_generator.generator', 'openapi_generator.web_ui', 'openapi_generator.multi_operation', 'openapi_generator.pdf_word_export', 'flask', 'jinja2', 'werkzeug', 'yaml', 'weasyprint', 'reportlab', 'docx', 'docx.shared', 'docx.enum.text', 'docx.enum.style', 'docx.oxml', 'docx.oxml.ns', 'docx.oxml.text.paragraph', 'docx.oxml.table', 'docx.text.paragraph', 'docx.text.run']
+hiddenimports = ['openapi_generator', 'openapi_generator.generator', 'openapi_generator.web_ui', 'openapi_generator.multi_operation', 'openapi_generator.pdf_word_export', 'openapi_generator.trial_manager', 'flask', 'jinja2', 'werkzeug', 'yaml', 'weasyprint', 'reportlab', 'docx', 'docx.shared', 'docx.enum.text', 'docx.enum.style', 'docx.oxml', 'docx.oxml.ns', 'docx.oxml.text.paragraph', 'docx.oxml.table', 'docx.text.paragraph', 'docx.text.run']
 tmp_ret = collect_all('flask')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('jinja2')

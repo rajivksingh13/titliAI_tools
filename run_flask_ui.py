@@ -5,6 +5,14 @@ import sys
 import os
 import site
 
+# ============================================================================
+# TRIAL SYSTEM CONFIGURATION
+# ============================================================================
+# Set to True to enable trial period (15 days by default, configurable in trial_manager.py)
+# Set to False to disable trial system completely
+ENABLE_TRIAL = False  # Change this to True/False to enable/disable trial
+# ============================================================================
+
 # Add current directory to path
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
@@ -27,6 +35,25 @@ if not getattr(sys, 'frozen', False):
             sys.path.insert(0, user_site)
     except:
         pass
+
+# Check trial status before starting the application (if enabled)
+# This must happen after path setup but before importing Flask
+if ENABLE_TRIAL:
+    try:
+        # Ensure openapi_generator is importable
+        if base_path not in sys.path:
+            sys.path.insert(0, base_path)
+        
+        from openapi_generator.trial_manager import check_trial_and_exit_if_expired
+        check_trial_and_exit_if_expired()
+    except ImportError:
+        # If trial manager is not available, continue without trial check
+        # This allows the app to work during development
+        pass
+    except Exception as e:
+        # If trial check fails, show error but don't block (for development)
+        print(f"Warning: Trial check failed: {e}")
+        print("Continuing without trial check...")
 
 # Import Flask app
 try:

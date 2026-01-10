@@ -3,9 +3,16 @@
 import json
 import yaml
 import re
+import copy
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from datetime import datetime
+
+
+class NoAnchorDumper(yaml.SafeDumper):
+    """Custom YAML dumper that prevents anchor/alias generation."""
+    def ignore_aliases(self, data):
+        return True
 
 
 class OpenAPIGenerator:
@@ -896,13 +903,13 @@ class OpenAPIGenerator:
                 "description": f"Request body for {method} {path}",
                 "content": {
                     "application/json": {
-                        "schema": request_schema
+                        "schema": copy.deepcopy(request_schema)
                     },
                     "application/xml": {
-                        "schema": request_schema
+                        "schema": copy.deepcopy(request_schema)
                     },
                     "application/x-www-form-urlencoded": {
-                        "schema": request_schema
+                        "schema": copy.deepcopy(request_schema)
                     }
                 },
                 "required": True
@@ -932,10 +939,10 @@ class OpenAPIGenerator:
                 "description": "Successful operation",
                 "content": {
                     "application/json": {
-                        "schema": response_schema
+                        "schema": copy.deepcopy(response_schema)
                     },
                     "application/xml": {
-                        "schema": response_schema
+                        "schema": copy.deepcopy(response_schema)
                     }
                 }
             }
@@ -1224,7 +1231,7 @@ class OpenAPIGenerator:
             tags=tag_definitions
         )
         
-        yaml_output = yaml.dump(openapi_doc, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        yaml_output = yaml.dump(openapi_doc, Dumper=NoAnchorDumper, default_flow_style=False, sort_keys=False, allow_unicode=True)
         
         if output_file:
             # Create output directory if it doesn't exist

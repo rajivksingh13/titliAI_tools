@@ -51,6 +51,7 @@ class PostmanExporter:
             collection['info']['version'] = self.info['version']
         
         # Group operations by tags
+        # Use only the first (primary) tag to prevent duplication when operations have multiple tags
         items_by_tag = {}
         untagged_items = []
         
@@ -63,10 +64,12 @@ class PostmanExporter:
                 
                 tags = operation.get('tags', [])
                 if tags:
-                    for tag in tags:
-                        if tag not in items_by_tag:
-                            items_by_tag[tag] = []
-                        items_by_tag[tag].append(request)
+                    # Use only the first tag to prevent duplication in Postman folders
+                    # This ensures each operation appears in only one folder
+                    primary_tag = tags[0]
+                    if primary_tag not in items_by_tag:
+                        items_by_tag[primary_tag] = []
+                    items_by_tag[primary_tag].append(request)
                 else:
                     untagged_items.append(request)
         

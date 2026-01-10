@@ -2293,7 +2293,7 @@
                         <!-- Upload or Drag Drop Method -->
                         <div id="responseUpload" class="json-input-content">
                             <div class="json-drag-drop-zone" 
-                                 onclick="document.getElementById('responseFile').click()"
+                                 onclick="handleFileInputClick('responseFile'); document.getElementById('responseFile').click();"
                                  ondrop="handleDrop(event, 'responseFile', 'responsePreview')" 
                                  ondragover="handleDragOver(event)" 
                                  ondragleave="handleDragLeave(event)">
@@ -2346,7 +2346,7 @@
                         <!-- Upload or Drag Drop Method -->
                         <div id="requestUpload" class="json-input-content">
                             <div class="json-drag-drop-zone" 
-                                 onclick="document.getElementById('requestFile').click()"
+                                 onclick="handleFileInputClick('requestFile'); document.getElementById('requestFile').click();"
                                  ondrop="handleDrop(event, 'requestFile', 'requestPreview')" 
                                  ondragover="handleDragOver(event)" 
                                  ondragleave="handleDragLeave(event)">
@@ -2586,7 +2586,7 @@
                                     <!-- Upload or Drag Drop Method -->
                                     <div id="newOpResponseUpload" class="json-input-content">
                                         <div class="json-drag-drop-zone" 
-                                             onclick="document.getElementById('newOpResponse').click()"
+                                             onclick="handleFileInputClick('newOpResponse'); document.getElementById('newOpResponse').click();"
                                              ondrop="handleDrop(event, 'newOpResponse', 'newOpResponsePreview')" 
                                              ondragover="handleDragOver(event)" 
                                              ondragleave="handleDragLeave(event)">
@@ -2637,7 +2637,7 @@
                                     <!-- Upload or Drag Drop Method -->
                                     <div id="newOpRequestUpload" class="json-input-content">
                                         <div class="json-drag-drop-zone" 
-                                             onclick="document.getElementById('newOpRequest').click()"
+                                             onclick="handleFileInputClick('newOpRequest'); document.getElementById('newOpRequest').click();"
                                              ondrop="handleDrop(event, 'newOpRequest', 'newOpRequestPreview')" 
                                              ondragover="handleDragOver(event)" 
                                              ondragleave="handleDragLeave(event)">
@@ -3178,6 +3178,8 @@
                 if (file.type === 'application/json' || file.name.endsWith('.json')) {
                     const input = document.getElementById(fileInputId);
                     if (input) {
+                        // Clear previous value to ensure new file is processed
+                        input.value = '';
                         // Create a new FileList with the dropped file
                         const dataTransfer = new DataTransfer();
                         dataTransfer.items.add(file);
@@ -3187,6 +3189,15 @@
                 } else {
                     alert('Please drop a JSON file');
                 }
+            }
+        }
+        
+        // Handle file input click to clear value first, allowing same file to be selected again
+        function handleFileInputClick(fileInputId) {
+            const input = document.getElementById(fileInputId);
+            if (input) {
+                // Clear the input value so selecting the same file will trigger onchange
+                input.value = '';
             }
         }
         
@@ -3293,10 +3304,17 @@
                         const preview = document.getElementById(previewId);
                         preview.style.display = 'block';
                         preview.innerHTML = `<p><strong>✅ ${file.name}</strong></p><pre>${JSON.stringify(json, null, 2)}</pre>`;
+                        // Store file content in data attribute for later retrieval
+                        // Don't clear input.value here - we need it for form submission
+                        // The input will be cleared when user clicks to upload again (via handleFileInputClick)
                     } catch (err) {
                         alert('Invalid JSON file: ' + err.message);
                         input.value = '';
                     }
+                };
+                reader.onerror = function() {
+                    alert('Error reading file');
+                    input.value = '';
                 };
                 reader.readAsText(file);
             }
@@ -3624,8 +3642,8 @@
                         <!-- Preview Section (Compact, Below Header) -->
                         <div style="padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg-secondary);">
                             <div class="expander" style="margin: 0;">
-                                <div class="expander-header" style="padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: space-between; align-items: center; transition: all 0.2s ease;">
-                                    <div style="display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 0.625rem; cursor: pointer;" onclick="toggleExpander(this.parentElement)">
+                                <div class="expander-header" onclick="toggleExpander(this.closest('.expander'))" style="padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: space-between; align-items: center; transition: all 0.2s ease; cursor: pointer;">
+                                    <div style="display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 0.625rem; cursor: pointer;">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; opacity: 0.8;">
                                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor" fill-opacity="0.7"/>
                                         </svg>
@@ -3638,7 +3656,7 @@
                                             </svg>
                                             <span style="font-weight: 500; letter-spacing: 0.3px;">Copy</span>
                                         </button>
-                                        <span class="expander-arrow" style="color: var(--text-tertiary); font-size: 0.875rem; display: inline-block !important; visibility: visible !important; opacity: 0.7 !important; cursor: pointer; transition: transform 0.2s ease;" onclick="toggleExpander(this.closest('.expander'))">▼</span>
+                                        <span class="expander-arrow" style="color: var(--text-tertiary); font-size: 0.875rem; display: inline-block !important; visibility: visible !important; opacity: 0.7 !important; cursor: pointer; transition: transform 0.2s ease;">▼</span>
                                     </div>
                                 </div>
                                 <div class="expander-content" style="display: none; margin-top: 0.75rem; overflow: visible;">
@@ -3767,8 +3785,8 @@
                         <!-- Preview Section (Compact, Below Header) -->
                         <div style="padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg-secondary);">
                             <div class="expander" style="margin: 0;">
-                                <div class="expander-header" style="padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: space-between; align-items: center; transition: all 0.2s ease;">
-                                    <div style="display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 0.625rem; cursor: pointer;" onclick="toggleExpander(this.parentElement)">
+                                <div class="expander-header" onclick="toggleExpander(this.closest('.expander'))" style="padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 8px; display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: space-between; align-items: center; transition: all 0.2s ease; cursor: pointer;">
+                                    <div style="display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 0.625rem; cursor: pointer;">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; opacity: 0.8;">
                                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor" fill-opacity="0.7"/>
                                         </svg>
@@ -3781,7 +3799,7 @@
                                             </svg>
                                             <span style="font-weight: 500; letter-spacing: 0.3px;">Copy</span>
                                         </button>
-                                        <span class="expander-arrow" style="color: var(--text-tertiary); font-size: 0.875rem; display: inline-block !important; visibility: visible !important; opacity: 0.7 !important; cursor: pointer; transition: transform 0.2s ease;" onclick="toggleExpander(this.closest('.expander'))">▼</span>
+                                        <span class="expander-arrow" style="color: var(--text-tertiary); font-size: 0.875rem; display: inline-block !important; visibility: visible !important; opacity: 0.7 !important; cursor: pointer; transition: transform 0.2s ease;">▼</span>
                                     </div>
                                 </div>
                                 <div class="expander-content" style="display: none; margin-top: 0.75rem; overflow: visible;">
