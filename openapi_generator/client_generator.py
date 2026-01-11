@@ -6,9 +6,11 @@ import shutil
 import tempfile
 import zipfile
 import urllib.request
+import urllib.error
 import sys
 import copy
 import yaml
+import platform
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple, List
 import json
@@ -48,6 +50,7 @@ class ClientGenerator:
     PYTHON_LIBRARIES = ['urllib3', 'asyncio', 'tornado', 'aiohttp']
     DOTNET_LIBRARIES = ['httpclient', 'restsharp']
     GO_LIBRARIES = ['go', 'go-gin-server']
+    APP_NAME = "OpenAPI-AutoGen"  # App name for user data directory
     
     def __init__(self, openapi_generator_cli_path: Optional[str] = None):
         """Initialize client generator.
@@ -60,17 +63,63 @@ class ClientGenerator:
         self._setup_cli_directory()
         self._detect_cli()
     
-    def _setup_cli_directory(self):
-        """Set up directory for storing OpenAPI Generator CLI JAR."""
+    def _get_cli_directory(self) -> Path:
+        """Get the directory for storing OpenAPI Generator CLI JAR.
+        
+        Uses platform-specific user data directories that are writable:
+        - Windows: %APPDATA%\\OpenAPI-AutoGen\\.openapi-generator-cli\\
+        - macOS: ~/Library/Application Support/OpenAPI-AutoGen/.openapi-generator-cli/
+        - Linux: ~/.config/OpenAPI-AutoGen/.openapi-generator-cli/
+        
+        Falls back to script/executable directory if user data directory creation fails.
+        
+        Returns:
+            Path to CLI directory
+        """
+        system = platform.system()
+        
+        # Try platform-specific user data directory first (preferred for executables)
+        try:
+            if system == "Windows":
+                appdata = os.getenv('APPDATA')
+                if appdata:
+                    base_dir = Path(appdata) / self.APP_NAME / '.openapi-generator-cli'
+                else:
+                    # Fallback to user home
+                    base_dir = Path.home() / '.openapi-generator-cli'
+            elif system == "Darwin":  # macOS
+                base_dir = Path.home() / "Library" / "Application Support" / self.APP_NAME / '.openapi-generator-cli'
+            else:  # Linux and others
+                base_dir = Path.home() / ".config" / self.APP_NAME / '.openapi-generator-cli'
+            
+            # Try to create directory (test if writable)
+            base_dir.mkdir(parents=True, exist_ok=True)
+            # Verify we can write by checking if directory exists and is writable
+            if base_dir.exists() and os.access(base_dir, os.W_OK):
+                return base_dir
+        except (OSError, PermissionError):
+            # If platform-specific directory fails, fall through to fallback
+            pass
+        
+        # Fallback: Use script/executable directory (for script mode or if user data dir fails)
         if getattr(sys, 'frozen', False):
-            # Running as executable
+            # Running as executable - use executable's directory
             base_path = Path(sys.executable).parent
         else:
-            # Running as script
+            # Running as script - use package directory
             base_path = Path(__file__).parent.parent
         
-        self.cli_dir = base_path / '.openapi-generator-cli'
-        self.cli_dir.mkdir(exist_ok=True)
+        return base_path / '.openapi-generator-cli'
+    
+    def _setup_cli_directory(self):
+        """Set up directory for storing OpenAPI Generator CLI JAR."""
+        self.cli_dir = self._get_cli_directory()
+        try:
+            self.cli_dir.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            # If directory creation fails, this will be caught in download/usage
+            # We still set the path so error messages are clear
+            pass
         self.jar_path = self.cli_dir / f'openapi-generator-cli-{self.jar_version}.jar'
     
     def _download_jar(self, silent: bool = False) -> Tuple[bool, str]:
@@ -83,6 +132,15 @@ class ClientGenerator:
             Tuple of (success, message)
         """
         try:
+            # Ensure CLI directory exists and is writable
+            try:
+                self.cli_dir.mkdir(parents=True, exist_ok=True)
+                # Test if directory is writable
+                if not os.access(self.cli_dir, os.W_OK):
+                    return False, f"Cannot write to directory: {self.cli_dir}. Please check permissions."
+            except (OSError, PermissionError) as e:
+                return False, f"Cannot create or access directory {self.cli_dir}: {str(e)}. Please check permissions."
+            
             jar_url = f"https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/{self.jar_version}/openapi-generator-cli-{self.jar_version}.jar"
             
             # Check if Java is available
@@ -97,19 +155,24 @@ class ClientGenerator:
                 return False, "Java is not installed. Please install Java to use client generation."
             
             # Download JAR file with progress callback
-            if not silent:
-                def show_progress(block_num, block_size, total_size):
-                    if total_size > 0:
-                        percent = min(100, (block_num * block_size * 100) // total_size)
-                        if block_num % 10 == 0:  # Print every 10 blocks to avoid spam
-                            print(f"\rDownloading OpenAPI Generator CLI {self.jar_version}... {percent}%", end='', flush=True)
-                
-                print(f"Downloading OpenAPI Generator CLI {self.jar_version}...")
-                urllib.request.urlretrieve(jar_url, self.jar_path, show_progress)
-                print()  # New line after progress
-            else:
-                # Silent download for web UI
-                urllib.request.urlretrieve(jar_url, self.jar_path)
+            try:
+                if not silent:
+                    def show_progress(block_num, block_size, total_size):
+                        if total_size > 0:
+                            percent = min(100, (block_num * block_size * 100) // total_size)
+                            if block_num % 10 == 0:  # Print every 10 blocks to avoid spam
+                                print(f"\rDownloading OpenAPI Generator CLI {self.jar_version}... {percent}%", end='', flush=True)
+                    
+                    print(f"Downloading OpenAPI Generator CLI {self.jar_version}...")
+                    urllib.request.urlretrieve(jar_url, self.jar_path, show_progress)
+                    print()  # New line after progress
+                else:
+                    # Silent download for web UI
+                    urllib.request.urlretrieve(jar_url, self.jar_path)
+            except (OSError, PermissionError) as e:
+                return False, f"Failed to download JAR file to {self.jar_path}: {str(e)}. Please check directory permissions."
+            except urllib.error.URLError as e:
+                return False, f"Failed to download OpenAPI Generator CLI: Network error - {str(e)}. Please check your internet connection."
             
             if self.jar_path.exists():
                 return True, f"OpenAPI Generator CLI downloaded successfully"
