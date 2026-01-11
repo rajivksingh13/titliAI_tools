@@ -1026,22 +1026,29 @@ def check_client_generator_cli():
                 'message': message,
                 'cli_path': generator.cli_path if hasattr(generator, 'cli_path') else None,
                 'cli_type': generator.cli_type if hasattr(generator, 'cli_type') else None,
-                'supported_languages': supported_languages
+                'supported_languages': supported_languages,
+                'cli_dir': str(generator.cli_dir) if hasattr(generator, 'cli_dir') else None
             })
         else:
-            return jsonify({
+            # Include more diagnostic information in the error response
+            error_details = {
                 'success': False,
                 'available': False,
                 'message': message,
-                'error': message
-            }), 400
+                'error': message,
+                'cli_dir': str(generator.cli_dir) if hasattr(generator, 'cli_dir') else None,
+                'jar_path': str(generator.jar_path) if hasattr(generator, 'jar_path') else None
+            }
+            return jsonify(error_details), 400
     except Exception as e:
         import traceback
+        error_trace = traceback.format_exc()
         return jsonify({
             'success': False,
             'available': False,
             'message': f'Error checking CLI: {str(e)}',
-            'error': str(e)
+            'error': str(e),
+            'traceback': error_trace if app.debug else None
         }), 500
 
 @app.route('/api/client/generate', methods=['POST'])
