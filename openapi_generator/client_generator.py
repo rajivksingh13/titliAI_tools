@@ -88,20 +88,56 @@ class ClientGenerator:
                     # Fallback to user home
                     base_dir = Path.home() / '.openapi-generator-cli'
             elif system == "Darwin":  # macOS
-                home = Path.home()
-                base_dir = home / "Library" / "Application Support" / self.APP_NAME / '.openapi-generator-cli'
+                # On Mac, use expanduser to handle ~ properly, especially in frozen executables
+                # Try multiple methods to get home directory
+                home_str = None
+                try:
+                    home_str = os.path.expanduser('~')
+                    if not home_str or home_str == '~' or not os.path.exists(home_str):
+                        home_str = None
+                except Exception:
+                    pass
+                
+                if not home_str:
+                    # Try environment variable
+                    home_str = os.environ.get('HOME')
+                    if not home_str or not os.path.exists(home_str):
+                        home_str = None
+                
+                if not home_str:
+                    # Last resort: use Path.home()
+                    try:
+                        home_path = Path.home()
+                        home_str = str(home_path)
+                    except Exception:
+                        # If all else fails, use current user's home from pwd
+                        home_str = os.path.expanduser('~')
+                
+                base_dir = Path(home_str) / "Library" / "Application Support" / self.APP_NAME / '.openapi-generator-cli'
             else:  # Linux and others
                 base_dir = Path.home() / ".config" / self.APP_NAME / '.openapi-generator-cli'
             
-            # Resolve the path to handle any symlinks or relative paths
-            base_dir = base_dir.resolve()
+            # Resolve parent directories that exist (don't resolve the full path if it doesn't exist)
+            # This handles symlinks in parent directories
+            parent = base_dir.parent
+            while parent != parent.parent:  # Stop at root
+                if parent.exists():
+                    try:
+                        parent = parent.resolve()
+                    except (OSError, RuntimeError):
+                        pass
+                    break
+                parent = parent.parent
+            
+            # Reconstruct the path with resolved parent
+            base_dir = parent / base_dir.name
             
             # Try to create directory (test if writable)
             base_dir.mkdir(parents=True, exist_ok=True)
             # Verify we can write by checking if directory exists and is writable
             if base_dir.exists() and os.access(str(base_dir), os.W_OK):
                 return base_dir
-        except (OSError, PermissionError) as e:
+        except (OSError, PermissionError, RuntimeError) as e:
             # If platform-specific directory fails, fall through to fallback
             # Log error for debugging (but don't fail yet - try fallback)
             if not getattr(sys, 'frozen', False):  # Only print in script mode
@@ -110,18 +146,34 @@ class ClientGenerator:
         # Fallback: Use script/executable directory (for script mode or if user data dir fails)
         if getattr(sys, 'frozen', False):
             # Running as executable - use executable's directory
-            base_path = Path(sys.executable).parent.resolve()
+            try:
+                base_path = Path(sys.executable).parent.resolve()
+            except (OSError, RuntimeError):
+                # If resolve fails, use as-is
+                base_path = Path(sys.executable).parent
         else:
             # Running as script - use package directory
-            base_path = Path(__file__).parent.parent.resolve()
+            try:
+                base_path = Path(__file__).parent.parent.resolve()
+            except (OSError, RuntimeError):
+                base_path = Path(__file__).parent.parent
         
         return base_path / '.openapi-generator-cli'
     
     def _setup_cli_directory(self):
         """Set up directory for storing OpenAPI Generator CLI JAR."""
         self.cli_dir = self._get_cli_directory()
-        # Resolve the path to ensure it's absolute
-        self.cli_dir = self.cli_dir.resolve()
+        # Try to resolve the path (only if it exists or parent exists)
+        try:
+            if self.cli_dir.exists():
+                self.cli_dir = self.cli_dir.resolve()
+            elif self.cli_dir.parent.exists():
+                # Resolve parent, then reconstruct
+                parent = self.cli_dir.parent.resolve()
+                self.cli_dir = parent / self.cli_dir.name
+        except (OSError, RuntimeError):
+            # If resolve fails, use path as-is
+            pass
         try:
             self.cli_dir.mkdir(parents=True, exist_ok=True)
         except (OSError, PermissionError) as e:
@@ -143,26 +195,23 @@ class ClientGenerator:
         try:
             # Ensure CLI directory exists and is writable
             try:
-                # Resolve path to handle any symlinks (only if path exists)
-                # If path doesn't exist, resolve parent directories
-                if self.cli_dir.exists():
-                    self.cli_dir = self.cli_dir.resolve()
-                else:
-                    # Resolve parent directory
-                    parent = self.cli_dir.parent
-                    if parent.exists():
-                        parent = parent.resolve()
-                    self.cli_dir = parent / self.cli_dir.name
+                # Create directory with all parent directories
+                # Use expanduser for Mac to handle ~ properly
+                cli_dir_str = str(self.cli_dir)
+                if '~' in cli_dir_str:
+                    cli_dir_str = os.path.expanduser(cli_dir_str)
+                    self.cli_dir = Path(cli_dir_str)
                 
                 # Create directory with all parent directories
                 self.cli_dir.mkdir(parents=True, exist_ok=True)
                 
                 # Verify directory was created and is writable
                 if not self.cli_dir.exists():
-                    return False, f"Failed to create directory: {self.cli_dir}. Please check permissions."
+                    return False, f"Failed to create directory: {self.cli_dir}. Please check permissions. On Mac, ensure the directory is in ~/Library/Application Support/OpenAPI-AutoGen/.openapi-generator-cli/"
                 
                 # Test if directory is writable (use string path for os.access)
-                if not os.access(str(self.cli_dir), os.W_OK):
+                cli_dir_abs = str(self.cli_dir.absolute()) if hasattr(self.cli_dir, 'absolute') else str(self.cli_dir)
+                if not os.access(cli_dir_abs, os.W_OK):
                     return False, f"Cannot write to directory: {self.cli_dir}. Please check permissions. On Mac, ensure the directory is in a writable location like ~/Library/Application Support/."
                 
                 # Test write by creating a temporary file

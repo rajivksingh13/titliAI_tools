@@ -10,6 +10,7 @@ import os
 import sys
 import socket
 import copy
+import platform
 from pathlib import Path
 from typing import Dict, Any
 
@@ -1031,18 +1032,29 @@ def check_client_generator_cli():
             })
         else:
             # Include more diagnostic information in the error response
+            import platform
             error_details = {
                 'success': False,
                 'available': False,
                 'message': message,
                 'error': message,
                 'cli_dir': str(generator.cli_dir) if hasattr(generator, 'cli_dir') else None,
-                'jar_path': str(generator.jar_path) if hasattr(generator, 'jar_path') else None
+                'jar_path': str(generator.jar_path) if hasattr(generator, 'jar_path') else None,
+                'platform': platform.system(),
+                'frozen': getattr(sys, 'frozen', False),
+                'home_dir': str(Path.home()) if hasattr(Path, 'home') else None
             }
+            # Log the error for debugging (especially on Mac)
+            print(f"CLI Check Failed: {message}", file=sys.stderr)
+            print(f"  CLI Dir: {error_details['cli_dir']}", file=sys.stderr)
+            print(f"  JAR Path: {error_details['jar_path']}", file=sys.stderr)
+            print(f"  Platform: {error_details['platform']}", file=sys.stderr)
             return jsonify(error_details), 400
     except Exception as e:
         import traceback
         error_trace = traceback.format_exc()
+        print(f"CLI Check Exception: {str(e)}", file=sys.stderr)
+        print(error_trace, file=sys.stderr)
         return jsonify({
             'success': False,
             'available': False,
