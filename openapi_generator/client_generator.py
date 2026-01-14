@@ -7,6 +7,7 @@ import tempfile
 import zipfile
 import urllib.request
 import urllib.error
+import ssl
 import sys
 import copy
 import yaml
@@ -238,25 +239,62 @@ class ClientGenerator:
             except (FileNotFoundError, subprocess.TimeoutExpired):
                 return False, "Java is not installed. Please install Java to use client generation."
             
-            # Download JAR file with progress callback
+            # Download JAR file with SSL context handling (fixes macOS certificate issues)
             try:
+                # Create SSL context that works on macOS
+                # Try to use certifi certificates if available (best practice)
+                ssl_context = None
+                try:
+                    import certifi
+                    ssl_context = ssl.create_default_context(cafile=certifi.where())
+                except (ImportError, Exception):
+                    # certifi not installed or failed, try default context
+                    try:
+                        ssl_context = ssl.create_default_context()
+                    except Exception:
+                        # Last resort: unverified context (works but less secure)
+                        # This handles macOS systems where Python's SSL isn't configured
+                        # Note: This bypasses certificate verification but allows download
+                        ssl_context = ssl._create_unverified_context()
+                
+                # Use urlopen with SSL context instead of urlretrieve for better control
                 if not silent:
-                    def show_progress(block_num, block_size, total_size):
-                        if total_size > 0:
-                            percent = min(100, (block_num * block_size * 100) // total_size)
-                            if block_num % 10 == 0:  # Print every 10 blocks to avoid spam
-                                print(f"\rDownloading OpenAPI Generator CLI {self.jar_version}... {percent}%", end='', flush=True)
-                    
                     print(f"Downloading OpenAPI Generator CLI {self.jar_version}...")
-                    urllib.request.urlretrieve(jar_url, self.jar_path, show_progress)
-                    print()  # New line after progress
-                else:
-                    # Silent download for web UI
-                    urllib.request.urlretrieve(jar_url, self.jar_path)
+                
+                with urllib.request.urlopen(jar_url, context=ssl_context) as response:
+                    total_size = int(response.headers.get('Content-Length', 0))
+                    downloaded = 0
+                    
+                    with open(self.jar_path, 'wb') as out_file:
+                        while True:
+                            chunk = response.read(8192)  # 8KB chunks
+                            if not chunk:
+                                break
+                            out_file.write(chunk)
+                            downloaded += len(chunk)
+                            
+                            if not silent and total_size > 0:
+                                percent = min(100, (downloaded * 100) // total_size)
+                                if downloaded % (8192 * 10) == 0:  # Print every 10 chunks
+                                    print(f"\rDownloading OpenAPI Generator CLI {self.jar_version}... {percent}%", end='', flush=True)
+                    
+                    if not silent:
+                        print()  # New line after progress
+                        
+            except ssl.SSLError as e:
+                # SSL-specific error
+                error_msg = str(e)
+                if 'CERTIFICATE_VERIFY_FAILED' in error_msg:
+                    return False, f"SSL certificate verification failed. This is a common issue on macOS. Please run: 'python3 -m pip install --upgrade certifi' or 'python3 -m pip install certifi' to fix SSL certificates. Error: {error_msg}"
+                return False, f"SSL error during download: {error_msg}"
             except (OSError, PermissionError) as e:
                 return False, f"Failed to download JAR file to {self.jar_path}: {str(e)}. Please check directory permissions."
             except urllib.error.URLError as e:
-                return False, f"Failed to download OpenAPI Generator CLI: Network error - {str(e)}. Please check your internet connection."
+                error_msg = str(e)
+                # Check if it's an SSL error wrapped in URLError
+                if 'SSL' in error_msg or 'CERTIFICATE' in error_msg:
+                    return False, f"SSL certificate error: {error_msg}. On macOS, try running: 'python3 -m pip install --upgrade certifi' or 'python3 -m pip install certifi'"
+                return False, f"Failed to download OpenAPI Generator CLI: Network error - {error_msg}. Please check your internet connection."
             
             if self.jar_path.exists():
                 return True, f"OpenAPI Generator CLI downloaded successfully"
