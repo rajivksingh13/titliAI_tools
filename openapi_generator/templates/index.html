@@ -1959,7 +1959,7 @@
     <div class="top-bar">
         <div class="top-bar-title">
             <img src="/static/AutoGen.png" alt="OpenAPI AutoGen" style="width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));">
-            <span>OpenAPI AutoGen</span>
+            <span>OpenAPI Control Plane</span>
         </div>
         <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle light/dark mode">
             <svg id="sunIcon" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1980,7 +1980,7 @@
                 <div class="sidebar-section-header" onclick="toggleSidebarSection(this)">
                     <div class="sidebar-section-title">
                         <span class="sidebar-section-chevron">▶</span>
-                        <span>Generate APIs</span>
+                        <span>Author API Specifications</span>
                     </div>
                 </div>
                 <div class="sidebar-section-content">
@@ -2019,7 +2019,7 @@
                 <div class="sidebar-section-header" onclick="toggleSidebarSection(this)">
                     <div class="sidebar-section-title">
                         <span class="sidebar-section-chevron">▶</span>
-                        <span>Export & Validation</span>
+                        <span>Publish & Govern</span>
                     </div>
                 </div>
                 <div class="sidebar-section-content">
@@ -2046,7 +2046,7 @@
                 <div class="sidebar-section-header" onclick="toggleSidebarSection(this)">
                     <div class="sidebar-section-title">
                         <span class="sidebar-section-chevron">▶</span>
-                        <span>Client Code Generation</span>
+                        <span>Client SDK Artifacts</span>
                     </div>
                 </div>
                 <div class="sidebar-section-content">
@@ -2201,7 +2201,7 @@
             <!-- Copyright Watermark -->
             <div class="copyright-watermark" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center;">
                 <p style="font-size: 0.6875rem; color: var(--text-tertiary); margin: 0; line-height: 1.4; opacity: 0.7;">
-                    © 2026 OpenAPI AutoGen<br>
+                    © 2026 OpenAPI Control Plane<br>
                     <span style="font-size: 0.625rem;">All rights reserved</span>
                 </p>
             </div>
@@ -2214,7 +2214,7 @@
                     <img src="/static/AutoGen.png" alt="OpenAPI AutoGen" style="width: 40px; height: 40px; object-fit: contain;">
                     <span>OpenAPI Specification AutoGen</span>
                 </h1>
-                <p>From JSON to OpenAPI YAML: Professional Specs Made Simple</p>
+                <p>Authoritative API Specifications for Secure & AI-Ready Systems</p>
             </div>
 
             <div class="content-body">
@@ -2232,7 +2232,7 @@
                 
                 <div class="row">
                     <div class="form-group">
-                        <label>🌐 HTTP Method & Path</label>
+                        <label>🌐 API Contract Definition</label>
                         <label>HTTP Method <span class="required">*</span></label>
                         <select name="method" required>
                             <option value="GET">GET</option>
@@ -2518,7 +2518,7 @@
                             <div class="row" style="gap: 1.5rem; margin-bottom: 1.5rem;">
                                 <div class="form-group" style="flex: 1; background: #f8fafc; padding: 1.25rem; border-radius: 8px; border: 1px solid #e2e8f0;">
                                     <label style="font-size: 0.875rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="font-size: 1rem;">🌐</span> HTTP Method & Path
+                                        <span style="font-size: 1rem;">🌐</span> API Contract Definition
                                     </label>
                                     <label style="font-size: 0.875rem; font-weight: 600; color: #0f172a; margin-bottom: 0.5rem; display: block;">HTTP Method <span class="required" style="color: #ef4444;">*</span></label>
                                     <select id="newOpMethod" onchange="updateRequestRequired()" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.875rem; background: white; margin-bottom: 1rem;">

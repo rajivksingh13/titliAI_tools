@@ -1,6 +1,6 @@
 """
 Trial License Manager for OpenAPI AutoGen
-Manages 5-day trial period that persists across re-downloads/extractions.
+Manages 7-day trial period that persists across re-downloads/extractions.
 """
 import os
 import json
@@ -16,7 +16,7 @@ class TrialManager:
     """Manages trial period for the application."""
     
     # Trial duration in days (change this to set the trial period)
-    TRIAL_DAYS = 5  # Default: 3 days
+    TRIAL_DAYS = 7  # Default: 7 days
     APP_NAME = "OpenAPI-AutoGen"
     
     def __init__(self):
