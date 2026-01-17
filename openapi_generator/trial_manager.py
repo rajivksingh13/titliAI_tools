@@ -16,7 +16,7 @@ class TrialManager:
     """Manages trial period for the application."""
     
     # Trial duration in days (change this to set the trial period)
-    TRIAL_DAYS = 7  # Default: 7 days
+    TRIAL_DAYS = 1  # Default: 7 days
     APP_NAME = "OpenAPI-AutoGen"
     
     def __init__(self):
