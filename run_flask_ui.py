@@ -134,6 +134,8 @@ if __name__ == '__main__':
     print("=" * 50)
     print("OpenAPI Generator - Web UI")
     print("=" * 50)
+    print("Created and Developed by Rajiv_Kumar_f8dd89")
+    print("=" * 50)
     
     # Debug info
     if getattr(sys, 'frozen', False):
