@@ -1,13 +1,15 @@
-# 📘 OpenAPI Generator Tool - Complete Run-Book Guide
+# 📘 OpenAPI Control Plane - Complete Run-Book Guide
+
+**Created and Developed by Rajiv_Kumar_f8dd89**
 
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
-2. [Generate APIs](#generate-apis)
-3. [Import APIs From Existing Sources](#import-apis-from-existing-sources)
-4. [GitHub Integration](#github-integration)
-5. [Export & Validation](#export--validation)
-6. [Client Code Generation](#client-code-generation)
+2. [Author API Specifications](#author-api-specifications)
+3. [Import Existing APIs](#import-existing-apis)
+4. [Publish & Govern](#publish--govern)
+5. [Client SDK Artifacts](#client-sdk-artifacts)
+6. [Github Integration](#github-integration)
 7. [Status](#status)
 8. [Troubleshooting](#troubleshooting)
 9. [Best Practices](#best-practices)
@@ -41,9 +43,12 @@
 - **Recommended:** Run `chmod +x start_ui.sh && ./start_ui.sh`
 - **Alternative:** Run `./openapi-gen-ui` directly (if executable)
 
-The UI will automatically open in your browser at `http://localhost:5000` (Flask).
+The UI will automatically open in your browser at `http://localhost:5000` (or the next available port if 5000 is in use).
 
-**Note:** No Python installation required! The executables are standalone and include all dependencies.
+**Note:** 
+- No Python installation required! The executables are standalone and include all dependencies.
+- The tool includes a 7-day trial period (configurable). Trial details are stored securely on your system.
+- The UI displays "OpenAPI Control Plane" in the top bar and includes developer credits in the sidebar footer.
 
 ### Using the Command-Line Interface (CLI)
 
@@ -64,22 +69,33 @@ For complete CLI documentation, see `RUNBOOK_GUIDE_CLI.md` included in the packa
 ### UI Overview
 
 The left sidebar contains all the main features organized into collapsible sections:
-- **Generate APIs** - Create new OpenAPI specifications (expanded by default)
-- **Import APIs From Existing Sources** - Convert existing API formats
-- **GitHub Integration** - Version control and collaboration (collapsed by default)
-- **Export & Validation** - Export and validate specifications (collapsed by default)
-- **Client Code Generation** - Generate client SDKs (collapsed by default)
+- **Author API Specifications** - Create new OpenAPI specifications (expanded by default)
+  - Create Single API Operation
+  - Create Multi API Operations
+- **Import Existing APIs** - Convert existing API formats (Postman, OpenAPI, cURL, HAR, AWS, Azure, Kong)
+- **Publish & Govern** - Export and validate specifications (collapsed by default)
+  - Export OpenAPI to Postman Collection
+  - Export OpenAPI to PDF/Word
+  - Generate HTML Docs From API Specification
+  - Validate API Specification
+- **Client SDK Artifacts** - Generate client SDKs (collapsed by default)
+  - Java Client Code
+  - Python Client Code
+  - .NET Client Code
+  - Go Client Code
+- **Github Integration** - Version control and collaboration (collapsed by default)
 - **Status** - System status information
 
 **UI Tips:**
 - Click on section headers to expand/collapse sections
 - Hover over labels with tooltip icons (💡) for additional help and examples
 - All sections can be expanded or collapsed as needed
-- The "Generate APIs" section is expanded by default for quick access
+- The "Author API Specifications" section is expanded by default for quick access
+- The UI supports both dark and light themes - use the theme toggle in the top bar
 
 ---
 
-## Generate APIs
+## Author API Specifications
 
 This section allows you to create OpenAPI specifications from scratch using JSON request/response files.
 
@@ -89,7 +105,7 @@ This section allows you to create OpenAPI specifications from scratch using JSON
 
 **Step-by-Step Guide:**
 
-1. **Click "Create Single API Operation"** in the left sidebar (under "Generate APIs" section)
+1. **Click "Create Single API Operation"** in the left sidebar (under "Author API Specifications" section)
 
 2. **Fill in Operation Details:**
    - **HTTP Method** (Required): Select from GET, POST, PUT, PATCH, DELETE
@@ -102,9 +118,11 @@ This section allows you to create OpenAPI specifications from scratch using JSON
 3. **Upload JSON Files:**
    - **Response JSON File** (Required): Upload the JSON response your API returns
      - Click the upload area or drag and drop the file
-     - File will be validated and previewed
+     - File will be validated and previewed in the "Uploaded JSON Preview" section
+     - **Tip:** If you update the JSON file and re-upload, the preview will automatically refresh
    - **Request JSON File** (Required for POST/PUT/PATCH/DELETE): Upload the JSON request body
      - Only needed for operations that accept request bodies
+     - GET requests don't require a request body
 
 4. **Configure API Metadata:**
    - **API Title**: Name of your API (default: "API Specification")
@@ -127,8 +145,10 @@ This section allows you to create OpenAPI specifications from scratch using JSON
    - Click **"🚀 Generate OpenAPI Specification"** button
    - Wait for processing (usually takes a few seconds)
    - Success message will appear with file location
-   - Preview of the generated YAML will be displayed
+   - Preview of the generated YAML will be displayed in an expandable section
+   - **Tip:** Click anywhere on the preview header to expand/collapse the YAML preview
    - Click **"📥 Download"** to save the file
+   - Click **"📋 Copy"** to copy the YAML to clipboard
 
 **Example Workflow:**
 ```
@@ -206,7 +226,7 @@ This section allows you to create OpenAPI specifications from scratch using JSON
 
 ---
 
-## Import APIs From Existing Sources
+## Import Existing APIs
 
 **Use Case:** Convert existing API documentation or network logs into OpenAPI 3.0 format.
 
@@ -222,7 +242,7 @@ This section allows you to create OpenAPI specifications from scratch using JSON
 
 **Step-by-Step Guide:**
 
-1. **Click "Import API"** in the left sidebar (under "Import APIs From Existing Sources")
+1. **Click "Import API"** in the left sidebar (under "Import Existing APIs" section)
 
 2. **Select Your File:**
    - Click the file input or drag and drop your file
@@ -360,113 +380,7 @@ This section allows you to create OpenAPI specifications from scratch using JSON
 
 ---
 
-## GitHub Integration
-
-**Use Case:** Version control your OpenAPI specifications, collaborate with team, and push changes to GitHub repositories.
-
-**Step-by-Step Guide:**
-
-### Setting Up GitHub Integration
-
-1. **Expand "Github Integration"** section in the left sidebar
-
-2. **Configure Repository:**
-   - **Remote Repository URL**: Enter your GitHub repository URL
-     - Example: `https://github.com/username/repo-name.git`
-     - Or: `git@github.com:username/repo-name.git`
-   - **Local Repository Path**: Enter the local path to your repository
-     - Example: `.` (current directory)
-     - Or: `C:\Users\YourName\my-api-repo`
-     - Or: `/home/user/my-api-repo`
-
-3. **Select Branch:**
-   - **Existing Branch**: 
-     - Select from dropdown (click "🔄 Refresh" to load branches)
-     - Or click "🔄 Refresh" to reload branch list
-   - **New Branch**:
-     - Select "New" radio button
-     - Enter branch name (e.g., `feature/openapi-update`)
-
-### Checking Git Status
-
-1. **Click "📊 Check Git Status"** button
-
-2. **View Status:**
-   - The tool will display:
-     - Current branch
-     - Modified files
-     - Untracked files
-     - Staged changes
-     - Repository status
-
-3. **Use Cases:**
-   - Verify changes before committing
-   - Check if repository is clean
-   - See what files have been modified
-
-### Committing and Pushing Changes
-
-1. **Generate or Import an OpenAPI Specification First:**
-   - You need a generated/imported file to commit
-   - The file path will be automatically detected
-
-2. **Click "📤 Commit & Push"** button
-
-3. **Fill in Commit Details:**
-   - **Commit Message** (Required): Describe your changes
-     - Example: "Add user management API endpoints"
-     - Example: "Update OpenAPI spec with new authentication"
-   - **Use Git Credentials**: 
-     - Check if you need to authenticate
-     - Uncheck if using SSH keys or credential manager
-
-4. **Review Settings:**
-   - Repository path (from configuration)
-   - Remote URL (from configuration)
-   - Branch (selected branch)
-   - File to commit (auto-detected from last generation)
-
-5. **Commit & Push:**
-   - Click **"Commit & Push"** button
-   - The tool will:
-     - Stage the OpenAPI file
-     - Create a commit with your message
-     - Push to the selected branch on GitHub
-
-6. **View Results:**
-   - Success message will confirm the push
-   - You can verify on GitHub website
-
-**Example Workflow:**
-```
-1. Generate openapi.yaml using Single Operation mode
-2. Configure GitHub Integration:
-   - Remote URL: https://github.com/mycompany/api-specs.git
-   - Local Path: .
-   - Branch: main
-3. Click "Check Git Status" → See openapi.yaml as untracked
-4. Click "Commit & Push":
-   - Message: "Add user API endpoint"
-   - Click Commit & Push
-5. Verify on GitHub → File is now in repository
-```
-
-**Tips:**
-- Make sure you have Git installed and configured
-- For private repositories, use SSH keys or personal access tokens
-- Always check Git status before committing
-- Use descriptive commit messages
-- Consider creating a new branch for major changes
-
-**Troubleshooting:**
-- **"Repository not found"**: Check the remote URL and your access
-- **"Authentication failed"**: Configure SSH keys or use credentials
-- **"Branch not found"**: Click Refresh to reload branches
-- **"Nothing to commit"**: Make sure you've generated a file first
-
----
-
-## Export & Validation
+## Publish & Govern
 
 This section provides tools to export your OpenAPI specifications to various formats and validate them.
 
@@ -480,7 +394,24 @@ This section provides tools to export your OpenAPI specifications to various for
    - You need an OpenAPI file to export
    - The file path will be automatically detected from your last generation
 
-2. **Click "📤 Export OpenAPI to Postman Collection"** in the left sidebar
+2. **Click "📤 Export OpenAPI to Postman Collection"** in the left sidebar (under "Publish & Govern" section)
+
+3. **Review File Path:**
+   - The tool will show the detected OpenAPI file path
+   - If no file is detected, you'll see an error message
+
+4. **Export:**
+   - Click **"Export to Postman"** button
+   - The tool will convert your OpenAPI spec to Postman Collection v2.1 format
+   - Success message will appear with download link
+
+5. **Download:**
+   - Click **"📥 Download Postman Collection"** to save the `.json` file
+
+6. **Import to Postman:**
+   - Open Postman
+   - Click Import → Select the downloaded file
+   - Your collection will be imported with all endpoints, requests, and examples
 
 3. **Review File Path:**
    - The tool will show the detected OpenAPI file path
@@ -513,6 +444,7 @@ This section provides tools to export your OpenAPI specifications to various for
 - Request/response examples are included
 - Authentication schemes are preserved
 - Headers and parameters are converted
+- **Tag Handling:** Operations with multiple tags use only the first (primary) tag for folder organization to prevent visual duplication in Postman, Redoc, and Swagger UI
 
 ### Option 2: Export OpenAPI to PDF/Word
 
@@ -522,7 +454,7 @@ This section provides tools to export your OpenAPI specifications to various for
 
 1. **Generate or Import an OpenAPI Specification First**
 
-2. **Click "📑 Export OpenAPI to PDF/Word"** in the left sidebar
+2. **Click "📑 Export OpenAPI to PDF/Word"** in the left sidebar (under "Publish & Govern" section)
 
 3. **Select Format:**
    - Choose **PDF** or **Word** (.docx)
@@ -567,7 +499,7 @@ This section provides tools to export your OpenAPI specifications to various for
 
 1. **Generate or Import an OpenAPI Specification First**
 
-2. **Click "📄 Generate HTML Docs From API Specification"** in the left sidebar
+2. **Click "📄 Generate HTML Docs From API Specification"** in the left sidebar (under "Publish & Govern" section)
 
 3. **Select Documentation Style:**
    - **Swagger UI** (Default): Interactive API explorer with "Try it out" feature
@@ -624,7 +556,7 @@ This section provides tools to export your OpenAPI specifications to various for
 
 1. **Generate or Import an OpenAPI Specification First**
 
-2. **Click "✓ Validate API Specification"** in the left sidebar
+2. **Click "✓ Validate API Specification"** in the left sidebar (under "Publish & Govern" section)
 
 3. **Automatic Validation:**
    - The tool will automatically detect your last generated file
@@ -681,7 +613,7 @@ This section provides tools to export your OpenAPI specifications to various for
 
 ---
 
-## Client Code Generation
+## Client SDK Artifacts
 
 **Use Case:** Generate client SDKs (Software Development Kits) in various programming languages from your OpenAPI specification.
 
@@ -696,8 +628,8 @@ This section provides tools to export your OpenAPI specifications to various for
 1. **Generate or Import an OpenAPI Specification First**
 
 2. **Select Your Language:**
-   - Click on the desired language in the "Client Code Generation" section
-   - Options: Java, Python, .NET, Go
+   - Click on the desired language in the "Client SDK Artifacts" section
+   - Options: Java Client Code, Python Client Code, .NET Client Code, Go Client Code
 
 3. **Configure Generation Options:**
    - **Package Name** (Required): Name for your generated package/library
@@ -868,35 +800,143 @@ This section provides tools to export your OpenAPI specifications to various for
 
 ---
 
+## Github Integration
+
+**Use Case:** Version control your OpenAPI specifications, collaborate with team, and push changes to GitHub repositories.
+
+**Step-by-Step Guide:**
+
+### Setting Up Github Integration
+
+1. **Expand "Github Integration"** section in the left sidebar
+
+2. **Configure Repository:**
+   - **Remote Repository URL**: Enter your GitHub repository URL
+     - Example: `https://github.com/username/repo-name.git`
+     - Or: `git@github.com:username/repo-name.git`
+   - **Local Repository Path**: Enter the local path to your repository
+     - Example: `.` (current directory)
+     - Or: `C:\Users\YourName\my-api-repo` (Windows)
+     - Or: `/home/user/my-api-repo` (Linux/macOS)
+
+3. **Select Branch:**
+   - **Existing Branch**: 
+     - Select from dropdown (click "🔄 Refresh" to load branches)
+     - Or click "🔄 Refresh" to reload branch list
+   - **New Branch**:
+     - Select "New" radio button
+     - Enter branch name (e.g., `feature/openapi-update`)
+
+### Checking Git Status
+
+1. **Click "📊 Check Git Status"** button
+
+2. **View Status:**
+   - The tool will display:
+     - Current branch
+     - Modified files
+     - Untracked files
+     - Staged changes
+     - Repository status
+
+3. **Use Cases:**
+   - Verify changes before committing
+   - Check if repository is clean
+   - See what files have been modified
+
+### Committing and Pushing Changes
+
+1. **Generate or Import an OpenAPI Specification First:**
+   - You need a generated/imported file to commit
+   - The file path will be automatically detected
+
+2. **Click "📤 Commit & Push"** button
+
+3. **Fill in Commit Details:**
+   - **Commit Message** (Required): Describe your changes
+     - Example: "Add user management API endpoints"
+     - Example: "Update OpenAPI spec with new authentication"
+   - **Use Git Credentials**: 
+     - Check if you need to authenticate
+     - Uncheck if using SSH keys or credential manager
+
+4. **Review Settings:**
+   - Repository path (from configuration)
+   - Remote URL (from configuration)
+   - Branch (selected branch)
+   - File to commit (auto-detected from last generation)
+
+5. **Commit & Push:**
+   - Click **"Commit & Push"** button
+   - The tool will:
+     - Stage the OpenAPI file
+     - Create a commit with your message
+     - Push to the selected branch on GitHub
+
+6. **View Results:**
+   - Success message will confirm the push
+   - You can verify on GitHub website
+
+**Example Workflow:**
+```
+1. Generate openapi.yaml using Single Operation mode
+2. Configure Github Integration:
+   - Remote URL: https://github.com/mycompany/api-specs.git
+   - Local Path: .
+   - Branch: main
+3. Click "Check Git Status" → See openapi.yaml as untracked
+4. Click "Commit & Push":
+   - Message: "Add user API endpoint"
+   - Click Commit & Push
+5. Verify on GitHub → File is now in repository
+```
+
+**Tips:**
+- Make sure you have Git installed and configured
+- For private repositories, use SSH keys or personal access tokens
+- Always check Git status before committing
+- Use descriptive commit messages
+- Consider creating a new branch for major changes
+
+**Troubleshooting:**
+- **"Repository not found"**: Check the remote URL and your access
+- **"Authentication failed"**: Configure SSH keys or use credentials
+- **"Branch not found"**: Click Refresh to reload branches
+- **"Nothing to commit"**: Make sure you've generated a file first
+
+---
+
 ## Status
 
-**Use Case:** Monitor the status of the CLI tool and system.
+**Use Case:** Monitor the status of the OpenAPI Generator CLI tool and system.
 
 **Step-by-Step Guide:**
 
 1. **Expand "Status" section** in the left sidebar
 
 2. **View Status Information:**
-   - **CLI Status**: Shows if the command-line tool is available
+   - **CLI Status**: Shows if the OpenAPI Generator CLI is available
    - **System Status**: Displays system information
    - **Connection Status**: Shows API connectivity
 
 3. **Status Indicators:**
-   - **🟢 Green**: System is operational
-   - **🟡 Yellow**: Warning or partial functionality
-   - **🔴 Red**: Error or system unavailable
+   - **🟢 Green/✓**: System is operational, CLI is ready
+   - **🟡 Yellow/⚠**: Warning or partial functionality
+   - **🔴 Red/❌**: Error or system unavailable
 
 **What It Shows:**
-- CLI tool availability
-- Python environment status
-- Required dependencies
+- OpenAPI Generator CLI tool availability
+- Java installation status (required for CLI)
+- CLI download status (if not available)
 - System resources
-- API endpoint connectivity
+- Platform information (Windows/macOS/Linux)
 
 **Troubleshooting:**
-- If CLI status shows error, check Python installation
+- If CLI status shows error, check Java installation
+- On macOS, if SSL certificate errors occur, run: `python3 -m pip install --upgrade certifi`
 - Verify all dependencies are installed
 - Check system resources if warnings appear
+- The CLI will be automatically downloaded on first use if not available
 
 ---
 
@@ -954,7 +994,7 @@ This section provides tools to export your OpenAPI specifications to various for
 - Ensure file encoding is UTF-8
 - Try with a simpler file first
 
-#### 5. GitHub Integration Issues
+#### 5. Github Integration Issues
 
 **Problem:** Can't commit or push to GitHub
 
@@ -966,9 +1006,9 @@ This section provides tools to export your OpenAPI specifications to various for
 - Verify branch exists
 - Check network connectivity
 
-#### 6. Client Code Generation Fails
+#### 6. Client SDK Generation Fails
 
-**Problem:** Client code generation errors
+**Problem:** Client SDK generation errors
 
 **Solutions:**
 - Ensure OpenAPI spec is valid (use Validate first)
@@ -1031,7 +1071,7 @@ This section provides tools to export your OpenAPI specifications to various for
   - Create separate specs for different domains
 
 - **Version Control:**
-  - Use GitHub Integration for versioning
+  - Use Github Integration for versioning
   - Commit frequently with descriptive messages
   - Tag releases appropriately
 
@@ -1086,7 +1126,7 @@ This section provides tools to export your OpenAPI specifications to various for
   - Create templates for common patterns
   - Document your process
 
-### 5. Client Code Generation
+### 5. Client SDK Artifacts
 
 - **Package Naming:**
   - Follow language conventions
@@ -1115,7 +1155,7 @@ This section provides tools to export your OpenAPI specifications to various for
   - Use GitHub Pages for public docs
   - Share via internal portals
 
-### 7. GitHub Integration
+### 7. Github Integration
 
 - **Commit Messages:**
   - Be descriptive
@@ -1201,27 +1241,31 @@ This section provides tools to export your OpenAPI specifications to various for
 
 ## Conclusion
 
-This run-book covers all features available in the OpenAPI Generator Tool's web UI. Whether you're creating new API specifications, importing from existing sources, generating client code, or managing version control, this guide provides step-by-step instructions for every feature.
+This run-book covers all features available in the OpenAPI Control Plane web UI. Whether you're creating new API specifications, importing from existing sources, generating client SDKs, or managing version control, this guide provides step-by-step instructions for every feature.
 
 **Remember:**
-- Always validate your specifications
+- Always validate your specifications before sharing
 - Use descriptive names and documentation
 - Test generated code before production use
 - Keep your work organized and version-controlled
 - Follow best practices for maintainability
+- Operations with multiple tags will use only the first tag in exports to prevent duplication
 
 **Package Contents:**
-- `openapi-gen-cli.exe` - Command-line interface (see `RUNBOOK_GUIDE_CLI.md`)
-- `openapi-gen-ui.exe` - Web-based user interface (this guide)
+- `openapi-gen-cli.exe` / `openapi-gen-cli` - Command-line interface (see `RUNBOOK_GUIDE_CLI.md`)
+- `openapi-gen-ui.exe` / `openapi-gen-ui` - Web-based user interface (this guide)
 - `START_UI.bat` / `start_ui.sh` - Quick launchers for the UI
 - `README.txt` - Quick start guide
 - `RUNBOOK_GUIDE.md` - Complete Web UI guide (this document)
 - `RUNBOOK_GUIDE_CLI.md` - Complete CLI guide
+- `LICENSE` - License information
 
 **Getting Help:**
 - For Web UI: Refer to this `RUNBOOK_GUIDE.md`
 - For CLI: Refer to `RUNBOOK_GUIDE_CLI.md`
 - Quick start: See `README.txt`
+
+**Created and Developed by Rajiv_Kumar_f8dd89**
 
 Happy API documenting! 🚀
 
