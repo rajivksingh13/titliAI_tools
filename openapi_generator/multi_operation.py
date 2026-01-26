@@ -150,9 +150,22 @@ class MultiOperationGenerator:
         for op_config in operations_config:
             method = op_config.get('method', '').upper()
             path = op_config.get('path')
-            # Normalize path to ensure it starts with '/' (OpenAPI requirement)
-            if path and not path.startswith('/'):
-                path = '/' + path
+            # Normalize path to ensure it starts with '/' and remove query params/fragments
+            if path:
+                # Remove leading '?' or '#' characters first
+                path = path.lstrip('?#')
+                # Remove query parameters (everything after '?')
+                if '?' in path:
+                    path = path.split('?')[0]
+                # Remove fragments (everything after '#')
+                if '#' in path:
+                    path = path.split('#')[0]
+                # If path is empty after cleaning, use root path
+                if not path:
+                    path = '/'
+                # Ensure path starts with '/'
+                if not path.startswith('/'):
+                    path = '/' + path
             operation_id = op_config.get('operation_id')
             response_json = op_config.get('response_json')
             request_json = op_config.get('request_json')

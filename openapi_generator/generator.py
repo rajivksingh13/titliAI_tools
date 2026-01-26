@@ -4,6 +4,7 @@ import json
 import yaml
 import re
 import copy
+import os
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from datetime import datetime
@@ -1028,19 +1029,43 @@ class OpenAPIGenerator:
     
     @staticmethod
     def normalize_path(path: str) -> str:
-        """Normalize API path to ensure it starts with '/'.
+        """Normalize API path to ensure it starts with '/' and is valid.
         
         OpenAPI specification requires all paths to start with '/'.
-        This function ensures compliance with the specification.
+        This function ensures compliance with the specification by:
+        - Removing leading '?' or '#' characters
+        - Removing query parameters (everything after '?')
+        - Removing fragments (everything after '#')
+        - Ensuring path starts with '/'
         
         Args:
-            path: Path string (may or may not start with '/')
+            path: Path string (may or may not start with '/', may contain query params)
             
         Returns:
-            Normalized path that starts with '/'
+            Normalized path that starts with '/' and is valid
         """
         if not path:
             return '/'
+        
+        # Remove leading '?' or '#' characters first (edge case: path starts with ? or #)
+        path = path.lstrip('?#')
+        
+        # If path is empty after removing leading characters, return root path
+        if not path:
+            return '/'
+        
+        # Remove query parameters (everything after '?')
+        if '?' in path:
+            path = path.split('?')[0]
+        
+        # Remove fragments (everything after '#')
+        if '#' in path:
+            path = path.split('#')[0]
+        
+        # If path is empty after cleaning, return root path
+        if not path:
+            return '/'
+        
         # Ensure path starts with '/'
         if not path.startswith('/'):
             return '/' + path

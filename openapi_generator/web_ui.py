@@ -209,6 +209,17 @@ def generate():
         if not data.get('method') or not data.get('path') or not data.get('operation_id'):
             return jsonify({'error': 'Method, path, and operation_id are required'}), 400
         
+        # Validate path format - cannot contain query parameters or fragments
+        path = data.get('path', '').strip()
+        if '?' in path:
+            return jsonify({
+                'error': 'Invalid API Path: Path cannot contain "?" (question mark). Query parameters should be defined separately in the API specification, not in the path. Please remove "?" and any query parameters from the path.'
+            }), 400
+        if '#' in path:
+            return jsonify({
+                'error': 'Invalid API Path: Path cannot contain "#" (hash/fragment). Please remove "#" and any fragments from the path.'
+            }), 400
+        
         # Get JSON data
         request_json_str = data.get('request_json')
         response_json_str = data.get('response_json')
@@ -415,6 +426,31 @@ def generate_multi():
         if not config_data:
             return jsonify({'error': 'Config data is required'}), 400
         
+        # Parse config first to validate paths
+        try:
+            if isinstance(config_data, str):
+                try:
+                    config = json.loads(config_data)
+                except json.JSONDecodeError:
+                    config = yaml.safe_load(config_data)
+            else:
+                config = config_data
+        except Exception:
+            pass  # Will be parsed again below
+        
+        # Validate paths in operations if config is already parsed
+        if isinstance(config, dict) and 'operations' in config:
+            for idx, op in enumerate(config.get('operations', [])):
+                path = op.get('path', '').strip()
+                if '?' in path:
+                    return jsonify({
+                        'error': f'Invalid API Path in operation {idx + 1}: Path cannot contain "?" (question mark). Query parameters should be defined separately in the API specification, not in the path. Please remove "?" and any query parameters from the path: {path}'
+                    }), 400
+                if '#' in path:
+                    return jsonify({
+                        'error': f'Invalid API Path in operation {idx + 1}: Path cannot contain "#" (hash/fragment). Please remove "#" and any fragments from the path: {path}'
+                    }), 400
+        
         # Parse config (can be JSON or YAML string)
         try:
             if isinstance(config_data, str):
@@ -502,6 +538,18 @@ def generate_multi_form():
         
         if not operations_data or len(operations_data) == 0:
             return jsonify({'error': 'At least one operation is required'}), 400
+        
+        # Validate paths in operations
+        for idx, op in enumerate(operations_data):
+            path = op.get('path', '').strip()
+            if '?' in path:
+                return jsonify({
+                    'error': f'Invalid API Path in operation {idx + 1}: Path cannot contain "?" (question mark). Query parameters should be defined separately in the API specification, not in the path. Please remove "?" and any query parameters from the path: {path}'
+                }), 400
+            if '#' in path:
+                return jsonify({
+                    'error': f'Invalid API Path in operation {idx + 1}: Path cannot contain "#" (hash/fragment). Please remove "#" and any fragments from the path: {path}'
+                }), 400
         
         # Create temporary directory for all files
         temp_dir = tempfile.mkdtemp()

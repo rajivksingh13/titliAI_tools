@@ -123,6 +123,12 @@ class OpenAPIValidator:
         if not path.startswith('/'):
             self.errors.append(f"Path '{path}': must start with '/' (OpenAPI specification requirement)")
         
+        # Path should not contain query parameters or fragments
+        if '?' in path:
+            self.errors.append(f"Path '{path}': contains query parameter '?'. Query parameters should be defined in the 'parameters' section, not in the path.")
+        if '#' in path:
+            self.errors.append(f"Path '{path}': contains fragment '#'. Fragments are not allowed in OpenAPI paths.")
+        
         # Validate operations
         valid_methods = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace']
         has_operations = False

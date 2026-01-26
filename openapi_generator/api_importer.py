@@ -404,7 +404,19 @@ class APIImporter:
         
         # Convert paths
         for path, path_item in swagger_spec.get('paths', {}).items():
-            # Normalize path to ensure it starts with '/' (OpenAPI requirement)
+            # Normalize path to ensure it starts with '/' and remove query params/fragments
+            # Remove leading '?' or '#' characters first
+            path = path.lstrip('?#')
+            # Remove query parameters (everything after '?')
+            if '?' in path:
+                path = path.split('?')[0]
+            # Remove fragments (everything after '#')
+            if '#' in path:
+                path = path.split('#')[0]
+            # If path is empty after cleaning, use root path
+            if not path:
+                path = '/'
+            # Ensure path starts with '/'
             normalized_path = path if path.startswith('/') else '/' + path
             openapi_path = {}
             for method, operation in path_item.items():

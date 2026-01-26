@@ -1331,6 +1331,12 @@
             box-shadow: 0 0 0 3px var(--primary-glow), var(--shadow);
             background: var(--bg-secondary);
         }
+        
+        /* Placeholder styling for grayed out default values */
+        input[type="text"]::placeholder, input[type="url"]::placeholder, textarea::placeholder {
+            color: #94a3b8;
+            opacity: 0.7;
+        }
         textarea {
             min-height: 80px;
             font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -2255,13 +2261,13 @@
                             <option value="DELETE">DELETE</option>
                         </select>
                         <label style="margin-top: 10px;">API Path <span class="required">*</span></label>
-                        <input type="text" name="path" placeholder="/users/{id}" value="/users/{id}" required>
+                        <input type="text" name="path" placeholder="/users/{id}" required>
                     </div>
                     
                     <div class="form-group">
                         <label>🏷️ Operation Information</label>
                         <label>Operation ID <span class="required">*</span></label>
-                        <input type="text" name="operation_id" placeholder="getUserById" value="getUserById" required>
+                        <input type="text" name="operation_id" placeholder="getUserById" required>
                         <label style="margin-top: 10px;">Summary (Optional)</label>
                         <input type="text" name="summary" placeholder="Brief description of what this endpoint does">
                     </div>
@@ -2398,7 +2404,7 @@
                         <label>API Title</label>
                         <input type="text" name="api_title" value="API Specification">
                         <label style="margin-top: 10px;">API Version</label>
-                        <input type="text" name="api_version" value="1.0.0">
+                        <input type="text" name="api_version" placeholder="1.0.0">
                         <label style="margin-top: 10px;">API Description (Optional)</label>
                         <textarea name="api_description" rows="3" placeholder="Describe your API..."></textarea>
                     </div>
@@ -2406,9 +2412,9 @@
                     <div class="form-group">
                         <label>🔗 Server Configuration</label>
                         <label>Base Path</label>
-                        <input type="text" name="base_path" value="/api/v1">
+                        <input type="text" name="base_path" placeholder="/api/v1">
                         <label style="margin-top: 10px;">Server URL (Optional)</label>
-                        <input type="text" name="server_url" value="https://api.example.com" placeholder="https://api.example.com">
+                        <input type="text" name="server_url" placeholder="https://api.example.com">
                         <div class="checkbox-group" style="margin-top: 15px;">
                             <input type="checkbox" name="include_default_headers" id="headersCheck" checked>
                             <label for="headersCheck" style="font-weight: normal;">Include Default Headers</label>
@@ -2699,7 +2705,7 @@
                     <label>API Title</label>
                     <input type="text" id="multiApiTitle" value="API Specification">
                     <label style="margin-top: 10px;">API Version</label>
-                    <input type="text" id="multiApiVersion" value="1.0.0">
+                    <input type="text" id="multiApiVersion" placeholder="1.0.0">
                     <label style="margin-top: 10px;">API Description (Optional)</label>
                     <textarea id="multiApiDesc" rows="3" placeholder="Describe your API..."></textarea>
                 </div>
@@ -2707,9 +2713,9 @@
                 <div class="form-group">
                     <label>🔗 Server Configuration</label>
                     <label>Base Path</label>
-                    <input type="text" id="multiBasePath" value="/api/v1">
+                    <input type="text" id="multiBasePath" placeholder="/api/v1">
                     <label style="margin-top: 10px;">Server URL (Optional)</label>
-                    <input type="text" id="multiServerUrl" value="https://api.example.com" placeholder="https://api.example.com">
+                    <input type="text" id="multiServerUrl" placeholder="https://api.example.com">
                     <div class="checkbox-group" style="margin-top: 15px;">
                         <input type="checkbox" id="multiHeadersCheck" checked>
                         <label for="multiHeadersCheck" style="font-weight: normal;">Include Default Headers</label>
@@ -3340,6 +3346,20 @@
             const summary = document.getElementById('newOpSummary').value;
             const desc = document.getElementById('newOpDesc').value;
             const tags = document.getElementById('newOpTags').value;
+            
+            // Validate API Path
+            const pathValidation = validatePath(path);
+            if (!pathValidation.valid) {
+                alert('⚠️ ' + pathValidation.message);
+                // Focus on the path input field
+                const pathInput = document.getElementById('newOpPath');
+                if (pathInput) {
+                    pathInput.focus();
+                    pathInput.select();
+                }
+                return;
+            }
+            
             // Get JSON from file input or paste area
             let responseJson = null;
             let requestJson = null;
@@ -3562,9 +3582,47 @@
             }
         }
         
+        function validatePath(path) {
+            if (!path) {
+                return { valid: false, message: 'API Path is required.' };
+            }
+            
+            // Check for query parameter marker (?)
+            if (path.includes('?')) {
+                return { 
+                    valid: false, 
+                    message: 'Invalid API Path: Path cannot contain "?" (question mark).\n\nQuery parameters should be defined separately in the API specification, not in the path.\n\nPlease remove "?" and any query parameters from the path.\n\nExample: Use "/users/{id}" instead of "/users/{id}?param=value" or "?/users/{id}"' 
+                };
+            }
+            
+            // Check for fragment marker (#)
+            if (path.includes('#')) {
+                return { 
+                    valid: false, 
+                    message: 'Invalid API Path: Path cannot contain "#" (hash/fragment).\n\nPlease remove "#" and any fragments from the path.' 
+                };
+            }
+            
+            return { valid: true };
+        }
+        
         document.getElementById('singleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
+            
+            // Validate API Path
+            const path = formData.get('path');
+            const pathValidation = validatePath(path);
+            if (!pathValidation.valid) {
+                alert('⚠️ ' + pathValidation.message);
+                // Focus on the path input field
+                const pathInput = e.target.querySelector('input[name="path"]');
+                if (pathInput) {
+                    pathInput.focus();
+                    pathInput.select();
+                }
+                return;
+            }
             
             // Get JSON from file input or paste area
             let responseJson = null;
