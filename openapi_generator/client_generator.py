@@ -453,6 +453,7 @@ class ClientGenerator:
         package_name: Optional[str] = None,
         library: Optional[str] = None,
         additional_properties: Optional[Dict[str, str]] = None,
+        use_jakarta_ee: Optional[bool] = None,
         skip_validate_spec: bool = False,
         tag_strategy: str = 'primary'
     ) -> Tuple[bool, str, Optional[str]]:
@@ -465,6 +466,9 @@ class ClientGenerator:
             package_name: Package/module name (optional)
             library: Library type (optional, uses default for language)
             additional_properties: Additional generator properties (optional)
+            use_jakarta_ee: Use Jakarta EE namespace instead of javax (Java only, optional)
+                - If None and library is 'jersey3', auto-enables Jakarta
+                - If None and library is not 'jersey3', defaults to False (javax)
             skip_validate_spec: Skip OpenAPI spec validation
             tag_strategy: How to handle multiple tags per operation:
                 - 'primary': Use only first tag (prevents duplication, default)
@@ -556,6 +560,19 @@ class ClientGenerator:
                 elif 'default_library' in lang_info and lang_info['default_library'] is not None:
                     props_dict['library'] = lang_info['default_library']
             
+            # Add Jakarta/Javax namespace option for Java
+            if language == 'java':
+                # Only process if useJakartaEe is not already in additional_properties (preserve user's explicit setting)
+                if 'useJakartaEe' not in props_dict:
+                    # Auto-detect for jersey3 (always uses Jakarta)
+                    if library == 'jersey3' and use_jakarta_ee is None:
+                        props_dict['useJakartaEe'] = 'true'
+                    # Use explicit value if provided via parameter
+                    elif use_jakarta_ee is not None:
+                        props_dict['useJakartaEe'] = 'true' if use_jakarta_ee else 'false'
+                    # If not specified, don't set it - let OpenAPI Generator CLI use its default (javax)
+                    # This preserves backward compatibility - existing code without this parameter works as before
+            
             # Add package name if specified
             if package_name:
                 if language == 'java':
@@ -644,6 +661,7 @@ class ClientGenerator:
         package_name: Optional[str] = None,
         library: Optional[str] = None,
         additional_properties: Optional[Dict[str, str]] = None,
+        use_jakarta_ee: Optional[bool] = None,
         skip_validate_spec: bool = False,
         tag_strategy: str = 'primary'
     ) -> Tuple[bool, str, Optional[str]]:
@@ -655,6 +673,9 @@ class ClientGenerator:
             package_name: Package/module name
             library: Library type
             additional_properties: Additional generator properties
+            use_jakarta_ee: Use Jakarta EE namespace instead of javax (Java only, optional)
+                - If None and library is 'jersey3', auto-enables Jakarta
+                - If None and library is not 'jersey3', defaults to False (javax)
             skip_validate_spec: Skip OpenAPI spec validation (workaround for path issues)
             tag_strategy: How to handle multiple tags ('primary' or 'all')
             
@@ -668,6 +689,7 @@ class ClientGenerator:
             package_name=package_name,
             library=library,
             additional_properties=additional_properties,
+            use_jakarta_ee=use_jakarta_ee,
             skip_validate_spec=skip_validate_spec,
             tag_strategy=tag_strategy
         )

@@ -1124,6 +1124,7 @@ def generate_client():
         package_name = data.get('package_name')
         library = data.get('library')
         additional_properties = data.get('additional_properties', {})
+        use_jakarta_ee = data.get('use_jakarta_ee', False)  # Default to false (javax) for backward compatibility
         skip_validate_spec = data.get('skip_validate_spec', False)  # Allow skipping validation
         tag_strategy = data.get('tag_strategy', 'primary')  # Default to 'primary' to prevent duplication
         
@@ -1172,6 +1173,7 @@ def generate_client():
             package_name=package_name,
             library=library,
             additional_properties=additional_properties,
+            use_jakarta_ee=use_jakarta_ee if language == 'java' else None,
             skip_validate_spec=skip_validate_spec,
             tag_strategy=tag_strategy
         )

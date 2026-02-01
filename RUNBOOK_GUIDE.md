@@ -664,11 +664,39 @@ This section provides tools to export your OpenAPI specifications to various for
 
 2. Configure:
    - **Package Name**: `com.yourcompany.api` (required)
-   - **Library**: Select from available options (OkHttp, Retrofit, etc.)
+   - **Library**: Select from available options:
+     - `resttemplate` - Spring RestTemplate (recommended for Spring Boot)
+     - `webclient` - Spring WebFlux reactive client
+     - `feign` - OpenFeign declarative HTTP client
+     - `okhttp-gson` - OkHttp with Gson
+     - `jersey2` - Jersey 2.x (Java EE / Spring Boot 2.x)
+     - `jersey3` - Jersey 3.x (Jakarta EE / Spring Boot 3.x+)
+     - `resteasy` - RESTEasy framework
+     - `vertx` - Eclipse Vert.x
+     - `native` - Java native HTTP client
+     - And more...
 
-3. Generate and download
+3. **Jakarta/Javax Namespace Selection** (Java-specific feature):
+   - **"Use Jakarta EE namespace"** checkbox appears when Java is selected
+   - **When to use Jakarta EE:**
+     - ✅ Spring Boot 3.x or later
+     - ✅ Jakarta EE 9+ applications
+     - ✅ Modern Java EE/Jakarta EE frameworks
+   - **When to use Javax (default):**
+     - ✅ Spring Boot 2.x
+     - ✅ Java EE 8 or earlier
+     - ✅ Legacy applications
+   - **Auto-Detection:**
+     - If you select `jersey3` library, Jakarta EE is automatically enabled (checkbox checked and disabled)
+     - A warning message appears: "⚠️ Note: Jersey 3 uses Jakarta EE by default"
+   - **Default Behavior:**
+     - Defaults to `javax.*` namespace for backward compatibility
+     - Unchecked = uses `javax.*` imports (Java EE)
+     - Checked = uses `jakarta.*` imports (Jakarta EE)
 
-4. **Using the Generated Code:**
+4. Generate and download
+
+5. **Using the Generated Code:**
    ```java
    // Extract the ZIP
    // Add to your project dependencies
@@ -688,6 +716,66 @@ This section provides tools to export your OpenAPI specifications to various for
 - Request/response models
 - Authentication support
 - Error handling
+- **Jakarta/Javax namespace support** - Choose between Java EE (`javax.*`) and Jakarta EE (`jakarta.*`) namespaces
+- **Spring Boot 3.x+ compatibility** - Generate code compatible with Spring Boot 3.x using Jakarta EE namespace
+- **Backward compatibility** - Defaults to `javax.*` for Spring Boot 2.x compatibility
+
+**Jakarta/Javax Namespace Feature Details:**
+
+**What It Does:**
+- Controls which namespace is used in generated Java code
+- **Javax (default)**: Generates `javax.annotation.Generated`, `javax.validation.*` imports
+- **Jakarta**: Generates `jakarta.annotation.Generated`, `jakarta.validation.*` imports
+
+**Example Generated Code Differences:**
+
+**With Javax (default, unchecked):**
+```java
+import javax.annotation.Generated;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
+```
+
+**With Jakarta (checked):**
+```java
+import jakarta.annotation.Generated;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+```
+
+**Test Scenarios:**
+
+1. **Test with Jakarta checked:**
+   - Select Java → Check "Use Jakarta EE namespace"
+   - Generate client code
+   - Verify: Generated code uses `jakarta.*` imports
+   - ✅ Compatible with Spring Boot 3.x+
+
+2. **Test with Jakarta unchecked (default):**
+   - Select Java → Leave "Use Jakarta EE namespace" unchecked
+   - Generate client code
+   - Verify: Generated code uses `javax.*` imports
+   - ✅ Compatible with Spring Boot 2.x
+
+3. **Test with jersey3 (auto-detection):**
+   - Select Java → Select library: `jersey3`
+   - Notice: Jakarta checkbox automatically checked and disabled
+   - Notice: Warning message appears
+   - Generate client code
+   - Verify: Generated code uses `jakarta.*` imports (Jersey 3 requires Jakarta)
+
+4. **Test with jersey2:**
+   - Select Java → Select library: `jersey2`
+   - Notice: Jakarta checkbox unchecked and enabled
+   - Leave unchecked and generate
+   - Verify: Generated code uses `javax.*` imports (Jersey 2 only supports javax)
+
+**Important Notes:**
+- The Jakarta/Javax option only appears for Java language selection
+- Other languages (Python, .NET, Go) do not show this option
+- Jersey 3 library automatically enables Jakarta (cannot be disabled)
+- Jersey 2 library should use Javax (Jakarta not supported)
+- Default is Javax for maximum backward compatibility
 
 ### Python Client Code
 
