@@ -3051,6 +3051,21 @@
             const pasteDiv = document.getElementById('newOpRequestPaste');
             const previewDiv = document.getElementById('newOpRequestPreview');
             
+            // Clear ALL JSON inputs on method change to prevent confusion
+            // Clear request files and textareas
+            if (fileInput) fileInput.value = '';
+            const requestPasteArea = document.getElementById('newOpRequestPasteArea');
+            if (requestPasteArea) requestPasteArea.value = '';
+            if (previewDiv) previewDiv.style.display = 'none';
+            
+            // Clear response files and textareas
+            const responseFileInput = document.getElementById('newOpResponse');
+            if (responseFileInput) responseFileInput.value = '';
+            const responsePasteArea = document.getElementById('newOpResponsePasteArea');
+            if (responsePasteArea) responsePasteArea.value = '';
+            const responsePreviewDiv = document.getElementById('newOpResponsePreview');
+            if (responsePreviewDiv) responsePreviewDiv.style.display = 'none';
+            
             if (method === 'GET') {
                 // For GET, show info box with message
                 if (info) {
@@ -3063,12 +3078,7 @@
                 if (uploadButtons) uploadButtons.style.display = 'none';
                 if (uploadDiv) uploadDiv.classList.remove('active');
                 if (pasteDiv) pasteDiv.classList.remove('active');
-                if (previewDiv) previewDiv.style.display = 'none';
                 if (fileInput) fileInput.required = false;
-                // Clear request file input
-                if (fileInput) fileInput.value = '';
-                const requestPasteArea = document.getElementById('newOpRequestPasteArea');
-                if (requestPasteArea) requestPasteArea.value = '';
             } else {
                 // For POST/PUT/PATCH/DELETE, show simple text like Response JSON
                 if (info) {
@@ -4505,6 +4515,23 @@
             const requestUpload = document.getElementById('requestUpload');
             const requestPaste = document.getElementById('requestPaste');
             const requestPreview = document.getElementById('requestPreview');
+            
+            // Clear ALL JSON inputs on method change to prevent confusion
+            // Clear request files and textareas
+            const requestFileInput = document.getElementById('requestFile');
+            if (requestFileInput) requestFileInput.value = '';
+            const requestPasteArea = document.getElementById('requestPasteArea');
+            if (requestPasteArea) requestPasteArea.value = '';
+            if (requestPreview) requestPreview.style.display = 'none';
+            
+            // Clear response files and textareas
+            const responseFileInput = document.getElementById('responseFile');
+            if (responseFileInput) responseFileInput.value = '';
+            const responsePasteArea = document.getElementById('responsePasteArea');
+            if (responsePasteArea) responsePasteArea.value = '';
+            const responsePreview = document.getElementById('responsePreview');
+            if (responsePreview) responsePreview.style.display = 'none';
+            
             if (method === 'GET') {
                 // For GET, show info box with message
                 if (requestInfo) {
@@ -4518,12 +4545,6 @@
                 if (requestPaste) {
                     requestPaste.classList.remove('active');
                 }
-                if (requestPreview) requestPreview.style.display = 'none';
-                // Clear request file input
-                const requestFileInput = document.getElementById('requestFile');
-                if (requestFileInput) requestFileInput.value = '';
-                const requestPasteArea = document.getElementById('requestPasteArea');
-                if (requestPasteArea) requestPasteArea.value = '';
             } else {
                 // For POST/PUT/PATCH/DELETE, show simple text like Response JSON
                 if (requestInfo) {

@@ -558,6 +558,12 @@ def generate_multi_form():
         
         # Build config structure from operations
         config = {'operations': []}
+
+        # Default headers toggle (multi-op UI sends include_default_headers; keep backward compat too)
+        if 'include_default_headers' in (request.json or {}):
+            include_default_headers_global = bool(request.json.get('include_default_headers'))
+        else:
+            include_default_headers_global = not bool(request.json.get('no_default_headers', False))
         
         for idx, op in enumerate(operations_data):
             # Save JSON files temporarily
@@ -577,7 +583,9 @@ def generate_multi_form():
                 'method': op['method'],
                 'path': op['path'],
                 'operation_id': op['operation_id'],
-                'response_json': response_file_path
+                'response_json': response_file_path,
+                # IMPORTANT: MultiOperationGenerator reads this per-operation; without it, it defaults to True
+                'include_default_headers': include_default_headers_global
             }
             
             if request_file_path:
